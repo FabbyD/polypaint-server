@@ -1,14 +1,17 @@
 class UsersController < ApplicationController
-  def new
-  end
 
   def create
+    if params[:user].blank?
+      return render status: :bad_request,
+        json: {:error => 'User param cannot be empty.'}.to_json
+    end
     @user = User.new(user_params)
     if @user.save
-      # success
+			log_in @user
       head :ok
     else
-      head :bad_request
+      render status: :bad_request,
+             json: {:error => @user.errors.full_messages}.to_json
     end
   end
 

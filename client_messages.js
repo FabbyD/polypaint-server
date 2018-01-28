@@ -1,4 +1,4 @@
-var exampleSocket = new WebSocket("ws://localhost:3000/cable");
+var exampleSocket = new WebSocket("ws://localhost:3000/cable?user_id=2");
 exampleSocket.onmessage = function (event) {
   var data = JSON.parse(event.data)
   if (data.type != "ping") console.log(data)

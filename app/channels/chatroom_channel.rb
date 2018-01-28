@@ -9,8 +9,8 @@ class ChatroomChannel < ApplicationCable::Channel
 
   def message(data)
     message = Message.new(content: data["content"])
-    message.user = User.find_by(id: 2) # FIXME put actual user_id
-    message.chatroom = Chatroom.find_by(id: 1) # FIXME put actual chatroom_id
+    message.user = User.find_by(id: data["user_id"])
+    message.chatroom = Chatroom.find_by(id: data["chatroom_id"])
     if message.save
       ActionCable.server.broadcast 'chatroom_channel',
         message: message.content,
