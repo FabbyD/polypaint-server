@@ -1,15 +1,14 @@
 # Installation on Ubuntu 16.04
 
+This installation process is basically a copy paste from [here][1]
+
 ## Ruby
 
 First, we obviously need Ruby. Do **not** install Ruby using apt-get as it will install it system-wide and you will most definetely have permissions problems. Instead, you can use `rbenv`.
 
+Install dependencies for rbenv and Ruby
 ```
 sudo apt-get update
-```
-
-Install dependencies for rbenv and Ruby (basically a copy paste from [here][1])
-```
 sudo apt-get install autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev
 ```
 
