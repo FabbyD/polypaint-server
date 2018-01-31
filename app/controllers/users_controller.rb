@@ -1,4 +1,5 @@
 class UsersController < ApplicationController
+  include RenderHelper
 
   def create
     if params[:user].blank?
@@ -8,10 +9,10 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
     if @user.save
 			log_in @user
-      head :ok
+      render status: :ok,
+        json: { user: { id: @user.id } }.to_json
     else
-      render status: :bad_request,
-             json: {:error => @user.errors.full_messages}.to_json
+      render_bad_request(@user.errors.full_messages)
     end
   end
 
