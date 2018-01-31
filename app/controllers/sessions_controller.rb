@@ -4,7 +4,7 @@ class SessionsController < ApplicationController
     if user && user.authenticate(params[:session][:password])
       log_in user
       render status: :ok,
-        json: { user: { id: @user.id } }.to_json
+        json: { user: { id: user.id } }.to_json
     else
 			head :unauthorized
     end
