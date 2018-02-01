@@ -6,5 +6,5 @@ test:
 
 production:
   adapter: redis
-  url: redis://localhost:6379/1
+  url: redis://h:p284aac7c7211196bb73b4e91e68185b69f589c0cb52bd75e385410c9a0edf6eb@ec2-52-5-111-41.compute-1.amazonaws.com:34409
   channel_prefix: polypaint-server_production

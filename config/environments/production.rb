@@ -91,4 +91,7 @@ Rails.application.configure do
 
   # allow anyone to connect #FIXME add token to API calls
   config.action_cable.disable_request_forgery_protection = true
+
+  # set the websocket url
+  config.web_socket_server_url = "wss://polypaint-pro.herokuapp.com/cable"
 end
