@@ -81,7 +81,7 @@ Next step is to subscribe to a Chatroom:
 exampleSocket.send(JSON.stringify(
   {
     command: "subscribe",
-    identifier: "{ \"channel\": \"ChatroomChannel\" }"
+    identifier: "{ \"channel\": \"ChatroomChannel\", \"room\": \"1st Room\" }"
   }
 ));
 ```
@@ -115,7 +115,7 @@ The command key is used to tell Rails what to do. `"message"` tells it that the 
 - And maybe others I am not aware of.
 
 ```
-identifier: "{ \"channel\": \"ChatroomChannel\" }"
+identifier: "{ \"channel\": \"ChatroomChannel\", \"room\": \"1st Room\" }"
 ```
 The value besides the `identifier` key is a **string** (even though it is built like a json) used in Rails to keep track of all broadcasting channels. It is very important to use the exact same key as the one used when subscribing earlier. Even  one space missing will cause Rails to fail to find the channel you are trying to send data on.
 
