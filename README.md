@@ -18,6 +18,15 @@ POST http://localhost:3000/users
 }
 ```
 
+Response
+```
+{
+  "user": {
+    "id": "<USER_ID>"
+  }
+}
+```
+
 **login**
 ```
 POST http://localhost:3000/login
@@ -25,6 +34,15 @@ POST http://localhost:3000/login
   "session": {
     "name": "username",
     "password": "password"
+  }
+}
+```
+
+Response
+```
+{
+  "user": {
+    "id": "<USER_ID>"
   }
 }
 ```
@@ -55,6 +73,8 @@ If the connection was succesful you should receive a confirmation from server th
 ```js
 Object { type: "welcome" }
 ```
+
+Note that if you wait too long before registering your onmessage listener (or whatever similar concept in C# or other languages), you might not receive the response. It's not a big deal. An error should occur if the connexion fails (first line) so you'll know if things go south.
 
 Next step is to subscribe to a Chatroom:
 ```js
@@ -88,7 +108,11 @@ This structure is what Rails ActionCable (the WebSocket library) expects.
 ```
 command: "message"
 ```
-The command key is used to tell Rails what to do. `"message"` tells it that the client is trying to send data to the server.
+The command key is used to tell Rails what to do. `"message"` tells it that the client is trying to send data to the server. It has nothing to do with the name of the channel whatsoever. Possible values for this field are:
+
+- `"subcribe"`
+- `"message"`
+- And maybe others I am not aware of.
 
 ```
 identifier: "{ \"channel\": \"ChatroomChannel\" }"
@@ -98,7 +122,18 @@ The value besides the `identifier` key is a **string** (even though it is built 
 ```
 "data": "{ \"action\": \"message\", \"content\": \"<THE MESSAGE YOU WANT TO SEND>\"}"
 ```
-The last entry in the json message is `data`. It also is a **string** built as a json. This json includes an `action` key that corresponds to a method in the Channel's implementation (see [chatroom_channel.rb][2]) and a `content` key and this is where you will put the data you want to send. 
+The last entry in the json message is `data`. It also is a **string** built as a json. This json includes an `action` key that corresponds to a method in the Channel's implementation (see [chatroom_channel.rb][2]) and a `content` key and this is where you will put the data you want to send.
+
+The best way to build the last two fields to make sure they are compliant with the ActionCable protocol is to redundantly jsonify them like so:
+```
+JSON.stringify({
+  command: "message",
+  identifier: JSON.stringify({ channel: "ChatroomChannel" }),
+  "data": JSON.stringify({ action: "message", content: "<THE MESSAGE YOU WANT TO SEND>"})
+})
+```
+
+This avoids the the need for multiple backslashes.
 
 [1]: docs/installation.md
 [2]: app/channels/chatroom_channel.rb#L10
