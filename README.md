@@ -20,10 +20,8 @@ POST /users
     "password": string
   }
 }
-```
 
 Response
-```
 {
   "user": {
     "id": int
@@ -40,10 +38,8 @@ POST /login
     "password": string
   }
 }
-```
 
 Response
-```
 {
   "user": {
     "id": int
