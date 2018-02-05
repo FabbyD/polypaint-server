@@ -8,15 +8,15 @@ class ChatroomChannel < ApplicationCable::Channel
   end
 
   def message(data)
-    message = Message.new(content: data["content"])
-    message.user = User.find_by(id: data["user_id"])
-    message.chatroom = Chatroom.find_by(id: data["chatroom_id"])
-    if message.save
+    #message = Message.new(content: data["content"])
+    #message.user = User.find_by(id: current_user)
+    #message.chatroom = Chatroom.find_by(id: 1) # FIXME take id from user
+    #if message.save
       ActionCable.server.broadcast 'chatroom_channel',
-        message: message.content,
-        user: message.user
-    else
-      puts 'Failed to save message in database.'
-    end
+        message: data["content"], # FIXME message.content
+        user: 'Pablo' # FIXME message.user
+    #else
+    #  puts "Failed to save message in database: #{message.errors.full_messages}"
+    #end
   end
 end
