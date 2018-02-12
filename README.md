@@ -1,7 +1,7 @@
 # polypaint-server
 Server for PolyPaint Pro (LOG3900-12)
 
-**URL for live server:** http://polypaint-pro.herokuapp.com
+**URL for live server:** polypaint-pro.herokuapp.com
 
 ## Installation
 
