@@ -6,10 +6,15 @@ module ApplicationCable
       self.current_user = find_verified_user
     end
 
+    def disconnect
+      UserList.remove(current_user.id)
+    end
+
     private
 
     def find_verified_user
       if current_user = User.find_by(id: request.parameters[:user_id])
+        UserList.add(current_user.id)
         current_user
       else
         reject_unauthorized_connection

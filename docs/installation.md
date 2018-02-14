@@ -1,3 +1,7 @@
+# Other dependencies
+- PostgreSQL
+- Redis
+
 # Installation on Ubuntu 16.04
 
 This installation process is basically a copy paste from [here][1]

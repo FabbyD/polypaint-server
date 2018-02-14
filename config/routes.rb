@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
   post '/users', to: 'users#create'
-  post   '/login',   to: 'sessions#create'
+  post   '/app-login',   to: 'logins#create'
   delete '/logout',  to: 'sessions#destroy' 
 end
