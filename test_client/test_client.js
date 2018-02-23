@@ -1,6 +1,6 @@
-var exampleSocket = new WebSocket("ws://10.200.22.191:3000/cable?user_id=3");
+var exampleSocket = new WebSocket("ws://localhost:3000/cable?user_id=1");
 
-var CHANNEL = "CanvasChannel"
+var CHANNEL = "ImageChannel"
 var ROOM = "Patate"
 
 function send(cmd, channel, room, data) {
@@ -11,14 +11,26 @@ function send(cmd, channel, room, data) {
   if (data) {
     payload["data"] = data
   }
-  exampleSocket.send(JSON.stringify(payload))
+  var string = JSON.stringify(payload)
+  console.log('Sending payload: ' + string)
+  exampleSocket.send(string)
 }
 
 function send_test() {
-  console.log('Sending test.')
+  var stroke = {
+    points : '[(1,1), (2,2) ]',
+    color : 'FFFFFF',
+    width : 3,
+    shape : 'Circle'
+  }
+  var content = {
+    stroke: stroke,
+    image_id: 1
+  }
+ 
   var data = JSON.stringify({
     action: "draw",
-    content: "beau content"
+    content: content
   })
   send("message", CHANNEL, ROOM, data)
 }

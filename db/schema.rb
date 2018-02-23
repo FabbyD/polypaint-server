@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180128205508) do
+ActiveRecord::Schema.define(version: 20180223030159) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -19,6 +19,15 @@ ActiveRecord::Schema.define(version: 20180128205508) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "images", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "name"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_images_on_user_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -31,6 +40,19 @@ ActiveRecord::Schema.define(version: 20180128205508) do
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
+  create_table "strokes", force: :cascade do |t|
+    t.path "points", null: false
+    t.string "color", limit: 6, null: false
+    t.integer "width", null: false
+    t.integer "shape", null: false
+    t.bigint "user_id"
+    t.bigint "image_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["image_id"], name: "index_strokes_on_image_id"
+    t.index ["user_id"], name: "index_strokes_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "password_digest"
@@ -38,6 +60,9 @@ ActiveRecord::Schema.define(version: 20180128205508) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "images", "users"
   add_foreign_key "messages", "chatrooms"
   add_foreign_key "messages", "users"
+  add_foreign_key "strokes", "images"
+  add_foreign_key "strokes", "users"
 end

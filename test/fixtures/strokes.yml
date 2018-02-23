@@ -1,0 +1,17 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  points: 
+  color: MyString
+  width: 1
+  shape: 1
+  user: one
+  image: one
+
+two:
+  points: 
+  color: MyString
+  width: 1
+  shape: 1
+  user: two
+  image: two
