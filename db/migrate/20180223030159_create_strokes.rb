@@ -1,7 +1,8 @@
 class CreateStrokes < ActiveRecord::Migration[5.1]
   def change
     create_table :strokes do |t|
-      t.path :points, null: false
+      t.integer :points_x, array: true, null: false, default: []
+      t.integer :points_y, array: true, null: false, default: []
       t.string :color, limit: 6, null: false
       t.integer :width, null: false
       t.integer :shape, null: false
@@ -17,7 +18,7 @@ class CreateStrokes < ActiveRecord::Migration[5.1]
         execute <<-SQL
           ALTER TABLE strokes
             ADD CONSTRAINT colorchk
-              CHECK (char_length(color) = 6) NO INHERIT;
+              CHECK (char_length(color) = 6 AND color ~ '^[1-9A-F]{6}$') NO INHERIT;
         SQL
       end
       dir.down do

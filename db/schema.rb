@@ -41,7 +41,8 @@ ActiveRecord::Schema.define(version: 20180223030159) do
   end
 
   create_table "strokes", force: :cascade do |t|
-    t.path "points", null: false
+    t.integer "points_x", default: [], null: false, array: true
+    t.integer "points_y", default: [], null: false, array: true
     t.string "color", limit: 6, null: false
     t.integer "width", null: false
     t.integer "shape", null: false

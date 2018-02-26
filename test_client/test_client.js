@@ -1,3 +1,4 @@
+//var exampleSocket = new WebSocket("wss://polypaint-pro-staging.herokuapp.com/cable?user_id=1");
 var exampleSocket = new WebSocket("ws://localhost:3000/cable?user_id=1");
 
 var CHANNEL = "ImageChannel"
@@ -18,10 +19,11 @@ function send(cmd, channel, room, data) {
 
 function send_test() {
   var stroke = {
-    points : '[(1,1), (2,2) ]',
+    points_x : [1,2],
+    points_y : [1,2],
     color : 'FFFFFF',
     width : 3,
-    shape : 'Circle'
+    shape : 'circle'
   }
   var content = {
     stroke: stroke,
