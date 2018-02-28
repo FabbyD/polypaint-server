@@ -18,7 +18,7 @@ class CreateStrokes < ActiveRecord::Migration[5.1]
         execute <<-SQL
           ALTER TABLE strokes
             ADD CONSTRAINT colorchk
-              CHECK (char_length(color) = 6 AND color ~ '^[1-9A-F]{6}$') NO INHERIT;
+              CHECK (char_length(color) = 6 AND color ~ '^[0-9A-F]{6}$') NO INHERIT;
         SQL
       end
       dir.down do
