@@ -5,6 +5,7 @@ class CreateStrokes < ActiveRecord::Migration[5.1]
       t.integer :points_y, array: true, null: false, default: []
       t.string :color, limit: 6, null: false
       t.integer :width, null: false
+      t.integer :height, null: false
       t.integer :shape, null: false
       t.references :user, foreign_key: true
       t.references :image, foreign_key: true

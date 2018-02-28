@@ -45,6 +45,7 @@ ActiveRecord::Schema.define(version: 20180223030159) do
     t.integer "points_y", default: [], null: false, array: true
     t.string "color", limit: 6, null: false
     t.integer "width", null: false
+    t.integer "height", null: false
     t.integer "shape", null: false
     t.bigint "user_id"
     t.bigint "image_id"
