@@ -16,10 +16,10 @@ class ImageChannel < ApplicationCable::Channel
     stroke.image = Image.find_by(id: content['image_id'])
     if stroke.save
       ActionCable.server.broadcast 'image_channel',
-        stroke: stroke.as_json(only: [:points_x, :points_y, :color, :width, :shape]),
+        stroke: stroke.as_json(except: [:user, :image, :created_at, :updated_at]),
         user: stroke.user.name,
         image: stroke.image.name,
-        time: stroke.created_at
+        time: stroke.updated_at
     else
       puts "[ERROR] ImageChannel.draw - error: #{stroke.errors.full_messages}"
     end  
