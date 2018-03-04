@@ -10,10 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180304220905) do
+ActiveRecord::Schema.define(version: 20180304225256) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "canvas_images", force: :cascade do |t|
+    t.binary "data", null: false
+    t.integer "pos_x", null: false
+    t.integer "pos_y", null: false
+    t.bigint "user_id"
+    t.bigint "canvas_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["canvas_id"], name: "index_canvas_images_on_canvas_id"
+    t.index ["user_id"], name: "index_canvas_images_on_user_id"
+  end
 
   create_table "canvases", force: :cascade do |t|
     t.bigint "user_id"
@@ -62,6 +74,8 @@ ActiveRecord::Schema.define(version: 20180304220905) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "canvas_images", "canvases"
+  add_foreign_key "canvas_images", "users"
   add_foreign_key "canvases", "users"
   add_foreign_key "messages", "chatrooms"
   add_foreign_key "messages", "users"

@@ -15,13 +15,29 @@ class CanvasChannel < ApplicationCable::Channel
     stroke.canvas = Canvas.find_by(id: content['canvas_id'])
     if stroke.save
       ActionCable.server.broadcast 'canvas_channel',
-        stroke: stroke.as_json(except: [:user, :canvas, :created_at, :updated_at]),
+        stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.user.name,
         canvas: stroke.canvas.name,
         time: stroke.updated_at
     else
       puts "[ERROR] CanvasChannel.draw - error: #{stroke.errors.full_messages}"
     end  
+  end
+
+  def add_image(data)
+    content = data['content']
+    canvas_image = CanvasImage.new(content['image'])
+    canvas_image.user = User.find_by(id: current_user)
+    canvas_image.canvas = Canvas.find_by(id: content['canvas_id'])
+    if canvas_image.save
+      ActionCable.server.broadcast 'canvas_channel',
+        canvas_image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+        user: canvas_image.user.name,
+        canvas: canvas_image.canvas.name,
+        time: canvas_image.updated_at
+    else
+      puts "[ERROR] CanvasChannel.add_image - error: #{canvas_image.errors.full_messages}"
+    end
   end
 
 end

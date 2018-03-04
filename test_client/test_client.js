@@ -17,7 +17,7 @@ function send(cmd, channel, room, data) {
   exampleSocket.send(string)
 }
 
-function send_test() {
+function send_stroke() {
   var stroke = {
     points_x : [1,2],
     points_y : [1,2],
@@ -27,8 +27,8 @@ function send_test() {
     shape : 'ellipse'
   }
   var content = {
-    stroke: stroke,
-    canvas_id: 1
+    canvas_id: 1,
+    stroke: stroke
   }
  
   var data = JSON.stringify({
@@ -38,11 +38,45 @@ function send_test() {
   send("message", CHANNEL, ROOM, data)
 }
 
+function send_image(blob) {
+  var image = {
+    pos_x : 1,
+    pos_y : 1,
+    data: blob
+  }
+  var content = {
+    canvas_id: 1,
+    image: image
+  }
+ 
+  var data = JSON.stringify({
+    action: "add_image",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
+
+function previewFile() {
+  var preview = document.querySelector('img');
+  var file    = document.querySelector('input[type=file]').files[0];
+  var reader  = new FileReader();
+
+  reader.addEventListener("load", function () {
+    preview.src = reader.result;
+	send_image(reader.result)
+  }, false);
+
+  if (file) {
+    reader.readAsDataURL(file);
+  }
+}
+
 exampleSocket.onmessage = function (event) {
   var data = JSON.parse(event.data)
   if (data.type != "ping") console.log(data)
   if (data.type == "confirm_subscription") {
-      send_test()
+  	var input = document.querySelector('input[type=file]');
+    input.style.display = 'block'
   }
 }
 exampleSocket.onopen = function(event) {

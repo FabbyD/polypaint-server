@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  data: 
+  pos_x: 1
+  pos_y: 1
+  user: one
+  canvas: one
+
+two:
+  data: 
+  pos_x: 1
+  pos_y: 1
+  user: two
+  canvas: two
