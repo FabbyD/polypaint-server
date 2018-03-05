@@ -24,7 +24,8 @@ function send_stroke() {
     color : 'FFFFFF',
     width : 3,
     height : 3,
-    shape : 'ellipse'
+    shape : 'ellipse',
+    stroke_type : 'circle'
   }
   var content = {
     canvas_id: 1,
@@ -77,6 +78,7 @@ exampleSocket.onmessage = function (event) {
   if (data.type == "confirm_subscription") {
   	var input = document.querySelector('input[type=file]');
     input.style.display = 'block'
+    send_stroke()
   }
 }
 exampleSocket.onopen = function(event) {
