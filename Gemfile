@@ -29,6 +29,9 @@ gem 'bcrypt', '~> 3.1.11'
 # Use redis to keep track of user logins and to run Action Cable in production
 gem 'redis', '~> 3.0'
 
+# Use S3 to store images
+gem 'aws-sdk-s3', '~> 1.0'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
