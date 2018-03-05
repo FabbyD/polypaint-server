@@ -13,6 +13,7 @@ class CanvasChannel < ApplicationCable::Channel
     stroke = Stroke.new(content['stroke'])
     stroke.user = User.find_by(id: current_user)
     stroke.canvas = Canvas.find_by(id: content['canvas_id'])
+    puts "CanvasChannel.draw - stroke: #{stroke.inspect}"
     if stroke.save
       ActionCable.server.broadcast 'canvas_channel',
         stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
