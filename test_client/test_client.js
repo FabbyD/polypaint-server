@@ -28,12 +28,48 @@ function send_stroke() {
     stroke_type : 'circle'
   }
   var content = {
-    canvas_id: 1,
+    canvas_id: 3,
     stroke: stroke
   }
  
   var data = JSON.stringify({
     action: "draw",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
+
+function remove_stroke(id) {
+    console.log('removing stroke ' + id)
+    var data = JSON.stringify({
+      action: "erase",
+      content: {
+        stroke: {
+          id: id
+        }
+      }
+    })
+    send("message", CHANNEL, ROOM, data)
+}
+
+function modify_stroke(id) {
+  var stroke = {
+    id : id,
+    points_x : [1,2],
+    points_y : [1,2],
+    color : '000000',
+    width : 5,
+    height : 5,
+    shape : 'ellipse',
+    stroke_type : 'circle'
+  }
+  var content = {
+    canvas_id: 3,
+    stroke: stroke
+  }
+ 
+  var data = JSON.stringify({
+    action: "modify_stroke",
     content: content
   })
   send("message", CHANNEL, ROOM, data)
@@ -46,12 +82,44 @@ function send_image(blob) {
     data: blob
   }
   var content = {
-    canvas_id: 1,
+    canvas_id: 3,
     image: image
   }
  
   var data = JSON.stringify({
     action: "add_image",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
+
+function remove_image(id) {
+  var image = {
+    id: id
+  }
+  var content = {
+    image: image
+  }
+  var data = JSON.stringify({
+    action: "remove_image",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
+
+function modify_image(id) {
+  var image = {
+    id: id,
+    pos_x : 1,
+    pos_y : 5
+  }
+  var content = {
+    canvas_id: 3,
+    image: image
+  }
+ 
+  var data = JSON.stringify({
+    action: "modify_image",
     content: content
   })
   send("message", CHANNEL, ROOM, data)
@@ -74,11 +142,20 @@ function previewFile() {
 
 exampleSocket.onmessage = function (event) {
   var data = JSON.parse(event.data)
-  if (data.type != "ping") console.log(data)
+  if (data.type != "ping") {
+      console.log(data)
+  }
   if (data.type == "confirm_subscription") {
   	var input = document.querySelector('input[type=file]');
     input.style.display = 'block'
     send_stroke()
+  } else if (data.type == null) {
+    action = data.message.action 
+    if (action == 'draw') {
+      remove_stroke(data.message.stroke.id)
+    } else if (action == 'add_image') {
+      modify_image(data.message.image.id)
+    }
   }
 }
 exampleSocket.onopen = function(event) {

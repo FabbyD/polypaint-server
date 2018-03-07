@@ -20,6 +20,7 @@ class CanvasChannel < ApplicationCable::Channel
     puts "CanvasChannel.draw - stroke: #{stroke.inspect}"
     if stroke.save
       ActionCable.server.broadcast 'canvas_channel',
+        action: 'draw',
         stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.user.name,
         canvas: stroke.canvas.name,
@@ -29,41 +30,110 @@ class CanvasChannel < ApplicationCable::Channel
     end  
   end
 
+  def erase(data)
+    content = data['content']
+    stroke = Stroke.find_by(id: content['stroke']['id'])
+    if stroke
+      stroke.destroy
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'erase',
+        stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+        user: stroke.user.name,
+        canvas: stroke.canvas.name,
+        time: stroke.updated_at
+    end
+  end
+
+  def modify_stroke(data)
+    content = data['content']
+    stroke = Stroke.find_by(id: content['stroke']['id'])
+    if stroke
+      stroke.update(content['stroke'])
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'modify_stroke',
+        stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+        user: stroke.user.name,
+        canvas: stroke.canvas.name,
+        time: stroke.updated_at
+    end
+  end
+
   def add_image(data)
     content = data['content']
-    if (content['image'] != nil)
-      encoded = split_base64 content['image']['data']
-      decoded = Base64.decode64(encoded['data']) 
-      filetype = encoded['filetype']
-      file = Tempfile.new(['upload', ".#{filetype}"], Rails.root.join('tmp').to_s, :encoding => 'ascii-8bit')
-      begin
-        file.write(decoded)
-        if file.size > 1.megabyte
-          puts "CanvasChannel.add_image - file too large for upload: #{file.size}"
-        else
-          puts "CanvasChannel.add_image - uploading image of size: #{file.size}"
-          obj = S3_BUCKET.object(File.basename(file.path))
-          obj.upload_file(file.path)
-          puts "CanvasChannel.add_image - uploaded to #{obj.public_url}"
+    if (content['image'] == nil)
+      return
+    end
 
-          canvas_image = CanvasImage.new(image_params(content['image']))
-          canvas_image.url = obj.public_url
-          canvas_image.user = User.find_by(id: current_user)
-          canvas_image.canvas = Canvas.find_by(id: content['canvas_id'])
-          if canvas_image.save
-            ActionCable.server.broadcast 'canvas_channel',
-              canvas_image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
-              user: canvas_image.user.name,
-              canvas: canvas_image.canvas.name,
-              time: canvas_image.updated_at
-          else
-            puts "[ERROR] CanvasChannel.add_image - error: #{canvas_image.errors.full_messages}"
-          end
+    encoded = split_base64 content['image']['data']
+    decoded = Base64.decode64(encoded['data']) 
+    filetype = encoded['filetype']
+    file = Tempfile.new(['upload', ".#{filetype}"], Rails.root.join('tmp').to_s, :encoding => 'ascii-8bit')
+    begin
+      file.write(decoded)
+      if file.size > 1.megabyte
+        puts "[ERROR] CanvasChannel.add_image - file is too large for upload: #{file.size}"
+      else
+        puts "CanvasChannel.add_image - uploading image of size: #{file.size}"
+        obj = S3_BUCKET.object(File.basename(file.path))
+        obj.upload_file(file.path)
+        puts "CanvasChannel.add_image - uploaded to #{obj.public_url}"
+
+        canvas_image = CanvasImage.new(image_params(content['image']))
+        canvas_image.url = obj.public_url
+        canvas_image.user = User.find_by(id: current_user)
+        canvas_image.canvas = Canvas.find_by(id: content['canvas_id'])
+        if canvas_image.save
+          ActionCable.server.broadcast 'canvas_channel',
+            action: 'add_image',
+            image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+            user: canvas_image.user.name,
+            canvas: canvas_image.canvas.name,
+            time: canvas_image.updated_at
+        else
+          puts "[ERROR] CanvasChannel.add_image - error: #{canvas_image.errors.full_messages}"
         end
-      ensure
-        file.close
-        file.unlink
       end
+    ensure
+      file.close
+      file.unlink
+    end
+  end
+
+  def remove_image(data)
+    content = data['content']
+    if (content['image'] == nil)
+      puts "[ERROR] CanvasChannel.remove_image - content incomplete"
+      return
+    end
+
+    canvas_image = CanvasImage.find_by(id: content['image']['id'])
+    if (canvas_image == nil)
+      puts "[ERROR] CanvasChannel.remove_image - could not find image"
+      return
+    end
+
+    obj = S3_BUCKET.object(get_s3_path(canvas_image.url))
+    obj.delete
+    canvas_image.destroy
+    ActionCable.server.broadcast 'canvas_channel',
+      action: 'remove_image',
+      image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+      user: User.find_by(id: current_user).name,
+      canvas: canvas_image.canvas.name,
+      time: canvas_image.updated_at
+  end
+
+  def modify_image(data)
+    content = data['content']
+    canvas_image = CanvasImage.find_by(id: content['image']['id'])
+    if canvas_image
+      canvas_image.update(content['image'])
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'modify_image',
+        image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+        user: canvas_image.user.name,
+        canvas: canvas_image.canvas.name,
+        time: canvas_image.updated_at
     end
   end
 
@@ -71,6 +141,10 @@ class CanvasChannel < ApplicationCable::Channel
 
   def image_params(image)
     return image.except('data')
+  end
+
+  def get_s3_path(url)
+    url.split('/')[-1]
   end
 
 end
