@@ -14,15 +14,18 @@ class CanvasChannel < ApplicationCable::Channel
 
   def draw(data)
     content = data['content']
+    user = User.find_by(id: current_user)
     stroke = Stroke.new(content['stroke'])
-    stroke.user = User.find_by(id: current_user)
+    stroke.user = user
+    stroke.editor = user
     stroke.canvas = Canvas.find_by(id: content['canvas_id'])
     puts "CanvasChannel.draw - stroke: #{stroke.inspect}"
     if stroke.save
       ActionCable.server.broadcast 'canvas_channel',
         action: 'draw',
-        stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+        stroke: stroke.as_json(except: [:user_id, :editor_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.user.name,
+        editor: stroke.editor.name,
         canvas: stroke.canvas.name,
         time: stroke.updated_at
     else
@@ -37,8 +40,9 @@ class CanvasChannel < ApplicationCable::Channel
       stroke.destroy
       ActionCable.server.broadcast 'canvas_channel',
         action: 'erase',
-        stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+        stroke: stroke.as_json(except: [:user_id, :editor_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.user.name,
+        editor: User.find_by(id: current_user).name,
         canvas: stroke.canvas.name,
         time: stroke.updated_at
     end
@@ -48,11 +52,12 @@ class CanvasChannel < ApplicationCable::Channel
     content = data['content']
     stroke = Stroke.find_by(id: content['stroke']['id'])
     if stroke
+      stroke.editor = User.find_by(id: current_user)
       stroke.update(content['stroke'])
       ActionCable.server.broadcast 'canvas_channel',
         action: 'modify_stroke',
         stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
-        user: stroke.user.name,
+        user: User.find_by(id: current_user).name,
         canvas: stroke.canvas.name,
         time: stroke.updated_at
     end
