@@ -1,5 +1,5 @@
-//var exampleSocket = new WebSocket("wss://polypaint-pro-staging.herokuapp.com/cable?user_id=1");
-var exampleSocket = new WebSocket("ws://localhost:3000/cable?user_id=1");
+var exampleSocket = new WebSocket("wss://polypaint-pro-staging.herokuapp.com/cable?user_id=1");
+//var exampleSocket = new WebSocket("ws://localhost:3000/cable?user_id=1");
 
 var CHANNEL = "CanvasChannel"
 var ROOM = "Patate"
@@ -129,7 +129,8 @@ function send_textbox() {
   var textbox = {
     content: "Une belle textbox",
     pos_x: 50,
-    pos_y: 50
+    pos_y: 50,
+    local_id: Math.floor(Math.random()*999999)
   }
   var content = {
     textbox: textbox,
