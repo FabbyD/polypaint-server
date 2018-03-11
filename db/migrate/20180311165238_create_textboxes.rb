@@ -4,7 +4,7 @@ class CreateTextboxes < ActiveRecord::Migration[5.1]
       t.text :content, default: ""
       t.integer :pos_x, null: false
       t.integer :pos_y, null: false
-      t.integer :local_id, null: false
+      t.string :local_id, null: false
       t.references :canvas, foreign_key: true, null: false
       t.references :editor, foreign_key: { to_table: :users }, null: false
 

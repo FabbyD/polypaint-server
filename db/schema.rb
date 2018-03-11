@@ -75,7 +75,7 @@ ActiveRecord::Schema.define(version: 20180311165238) do
     t.text "content", default: ""
     t.integer "pos_x", null: false
     t.integer "pos_y", null: false
-    t.integer "local_id", null: false
+    t.string "local_id", null: false
     t.bigint "canvas_id", null: false
     t.bigint "editor_id", null: false
     t.datetime "created_at", null: false
