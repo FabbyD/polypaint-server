@@ -72,9 +72,9 @@ ActiveRecord::Schema.define(version: 20180311165238) do
   end
 
   create_table "textboxes", force: :cascade do |t|
-    t.text "content"
-    t.integer "pos_x"
-    t.integer "pos_y"
+    t.text "content", default: ""
+    t.integer "pos_x", null: false
+    t.integer "pos_y", null: false
     t.bigint "canvas_id", null: false
     t.bigint "editor_id", null: false
     t.datetime "created_at", null: false
