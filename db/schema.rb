@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180308174504) do
+ActiveRecord::Schema.define(version: 20180311152909) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -71,6 +71,16 @@ ActiveRecord::Schema.define(version: 20180308174504) do
     t.index ["user_id"], name: "index_strokes_on_user_id"
   end
 
+  create_table "textboxes", force: :cascade do |t|
+    t.text "content"
+    t.bigint "canvas_id"
+    t.bigint "editor_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["canvas_id"], name: "index_textboxes_on_canvas_id"
+    t.index ["editor_id"], name: "index_textboxes_on_editor_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "password_digest"
@@ -86,4 +96,6 @@ ActiveRecord::Schema.define(version: 20180308174504) do
   add_foreign_key "strokes", "canvases"
   add_foreign_key "strokes", "users"
   add_foreign_key "strokes", "users", column: "editor_id"
+  add_foreign_key "textboxes", "canvases"
+  add_foreign_key "textboxes", "users", column: "editor_id"
 end
