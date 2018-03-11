@@ -145,11 +145,13 @@ class CanvasChannel < ApplicationCable::Channel
 
   def add_textbox(data)
     content = data['content']
+    # Make sure to save text in LF format
+    content['textbox']['content'].gsub!("\r\n", "\n")
     user = User.find_by(id: current_user)
     textbox = Textbox.new(content['textbox'])
     textbox.editor = user
     textbox.canvas = Canvas.find_by(id: content['canvas_id'])
-    puts "CanvasChannel.draw - stroke: #{textbox.inspect}"
+    puts "CanvasChannel.add_textbox - textbox: #{textbox.inspect}"
     if textbox.save
       ActionCable.server.broadcast 'canvas_channel',
         action: 'add_textbox',
@@ -165,6 +167,8 @@ class CanvasChannel < ApplicationCable::Channel
 
   def modify_textbox(data)
     content = data['content']
+    # Make sure to save text in LF format
+    content['textbox']['content'].gsub!("\r\n", "\n")
     textbox = Textbox.find_by(id: content['textbox']['id'])
     if textbox
       textbox.editor = User.find_by(id: current_user)
