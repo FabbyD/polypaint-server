@@ -156,7 +156,7 @@ class CanvasChannel < ApplicationCable::Channel
       ActionCable.server.broadcast 'canvas_channel',
         action: 'add_textbox',
         textbox: textbox.as_json(except: [:editor_id, :canvas_id, :created_at, :updated_at]),
-        editor: textbox.editor.name,
+        user: textbox.editor.name,
         canvas: textbox.canvas.name,
         time: textbox.updated_at
     else
