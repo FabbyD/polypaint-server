@@ -2,10 +2,14 @@
 
 one:
   content: MyText
+  pos_x: 1
+  pos_y: 1
   canvas: one
   user: one
 
 two:
   content: MyText
+  pos_x: 1
+  pos_y: 1
   canvas: two
   user: two

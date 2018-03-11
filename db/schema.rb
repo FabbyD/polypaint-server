@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180311152909) do
+ActiveRecord::Schema.define(version: 20180311165238) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -73,8 +73,10 @@ ActiveRecord::Schema.define(version: 20180311152909) do
 
   create_table "textboxes", force: :cascade do |t|
     t.text "content"
-    t.bigint "canvas_id"
-    t.bigint "editor_id"
+    t.integer "pos_x"
+    t.integer "pos_y"
+    t.bigint "canvas_id", null: false
+    t.bigint "editor_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["canvas_id"], name: "index_textboxes_on_canvas_id"

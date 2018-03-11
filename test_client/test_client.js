@@ -28,7 +28,7 @@ function send_stroke() {
     stroke_type : 'circle'
   }
   var content = {
-    canvas_id: 3,
+    canvas_id: 1,
     stroke: stroke
   }
  
@@ -64,7 +64,7 @@ function modify_stroke(id) {
     stroke_type : 'circle'
   }
   var content = {
-    canvas_id: 3,
+    canvas_id: 1,
     stroke: stroke
   }
  
@@ -82,7 +82,7 @@ function send_image(blob) {
     data: blob
   }
   var content = {
-    canvas_id: 3,
+    canvas_id: 1,
     image: image
   }
  
@@ -114,7 +114,7 @@ function modify_image(id) {
     pos_y : 5
   }
   var content = {
-    canvas_id: 3,
+    canvas_id: 1,
     image: image
   }
  
@@ -124,6 +124,60 @@ function modify_image(id) {
   })
   send("message", CHANNEL, ROOM, data)
 }
+
+function send_textbox() {
+  var textbox = {
+    content: "Une belle textbox",
+    pos_x: 50,
+    pos_y: 50
+  }
+  var content = {
+    textbox: textbox,
+    canvas_id: 1
+  }
+  var data = JSON.stringify({
+    action: "add_textbox",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
+
+function modify_textbox(id) {
+  var textbox = {
+    id: id,
+    content: "Une belle textbox modifiée",
+    pos_x: 100,
+    pos_y: 50
+  }
+  var content = {
+    textbox: textbox,
+    canvas_id: 1
+  }
+  var data = JSON.stringify({
+    action: "modify_textbox",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
+
+function remove_textbox(id) {
+  var textbox = {
+    id: id,
+    content: "Une belle textbox modifiée",
+    pos_x: 100,
+    pos_y: 50
+  }
+  var content = {
+    textbox: textbox,
+    canvas_id: 1
+  }
+  var data = JSON.stringify({
+    action: "remove_textbox",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
+
 
 function previewFile() {
   var preview = document.querySelector('img');
@@ -148,13 +202,23 @@ exampleSocket.onmessage = function (event) {
   if (data.type == "confirm_subscription") {
   	var input = document.querySelector('input[type=file]');
     input.style.display = 'block'
-    send_stroke()
+    send_textbox()
   } else if (data.type == null) {
     action = data.message.action 
     if (action == 'draw') {
-      remove_stroke(data.message.stroke.id)
+      //remove_stroke(data.message.stroke.id)
     } else if (action == 'add_image') {
       modify_image(data.message.image.id)
+    } else if (action == 'add_textbox') {
+      setTimeout(function() {
+        modify_textbox(data.message.textbox.id)
+      }, 2000)
+    } else if (action == 'modify_textbox') {
+      setTimeout(function() {
+        remove_textbox(data.message.textbox.id)
+      }, 2000)
+    } else {
+      console.log('Unknown action')
     }
   }
 }
