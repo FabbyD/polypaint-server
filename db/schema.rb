@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180316021334) do
+ActiveRecord::Schema.define(version: 20180316150258) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -68,6 +68,8 @@ ActiveRecord::Schema.define(version: 20180316021334) do
     t.integer "stroke_type", default: 0, null: false
     t.string "local_id"
     t.bigint "editor_id"
+    t.float "radius_x"
+    t.float "radius_y"
     t.index ["canvas_id"], name: "index_strokes_on_canvas_id"
     t.index ["editor_id"], name: "index_strokes_on_editor_id"
     t.index ["user_id"], name: "index_strokes_on_user_id"
