@@ -17,6 +17,36 @@ function send(cmd, channel, room, data) {
   exampleSocket.send(string)
 }
 
+function send_strokes() {
+  var strokes = [{
+    points_x : [1,2],
+    points_y : [1,2],
+    color : 'FFFFFF',
+    width : 3,
+    height : 3,
+    shape : 'ellipse',
+    stroke_type : 'circle'
+  }, {
+    points_x : [1,2],
+    points_y : [1,2],
+    color : '000000',
+    width : 3,
+    height : 3,
+    shape : 'ellipse',
+    stroke_type : 'normal'
+  }]
+  var content = {
+    canvas_id: 1,
+    strokes: strokes
+  }
+ 
+  var data = JSON.stringify({
+    action: "add_strokes",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
+
 function send_stroke() {
   var stroke = {
     points_x : [1,2],
@@ -226,7 +256,7 @@ exampleSocket.onmessage = function (event) {
   if (data.type == "confirm_subscription") {
   	var input = document.querySelector('input[type=file]');
     input.style.display = 'block'
-    update_canvas(1)
+    send_strokes()
   } else if (data.type == null) {
     action = data.message.action 
     if (action == 'draw') {

@@ -12,6 +12,44 @@ class CanvasChannel < ApplicationCable::Channel
     # Any cleanup needed when channel is unsubscribed
   end
 
+  def add_strokes(data)
+    content = data['content']
+    user = User.find_by(id: current_user)
+    canvas = Canvas.find_by(id: content['canvas_id'])
+    jstrokes = content['strokes']
+    jstrokes = jstrokes.map do |jstroke| 
+      jstroke[:user_id] = user.id
+      jstroke[:editor_id] = user.id
+      jstroke[:canvas_id] = canvas.id
+      jstroke
+    end
+    strokes = Stroke.create(jstrokes)
+
+    valid = true
+    errors = []
+    for stroke in strokes
+      if stroke.errors.count > 0
+        valid = false
+        errors.append(stroke.errors.full_messages)
+      end
+    end
+
+    if valid
+      jstrokes = strokes.map do |s|
+        s.as_json(except: ['user_id', 'editor_id', 'canvas_id', 'created_at', 'updated_at'])
+      end
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'add_strokes',
+        strokes: jstrokes,
+        user: user.name,
+        editor: user.name,
+        canvas_name: canvas.name,
+        time: strokes[-1].updated_at
+    else
+      puts "[ERROR] CanvasChannel.add_strokes - error: #{errors}"
+    end
+  end
+
   def draw(data)
     content = data['content']
     user = User.find_by(id: current_user)
