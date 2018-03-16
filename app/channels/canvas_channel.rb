@@ -26,7 +26,7 @@ class CanvasChannel < ApplicationCable::Channel
         stroke: stroke.as_json(except: [:user_id, :editor_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.user.name,
         editor: stroke.editor.name,
-        canvas: stroke.canvas.name,
+        canvas_name: stroke.canvas.name,
         time: stroke.updated_at
     else
       puts "[ERROR] CanvasChannel.draw - error: #{stroke.errors.full_messages}"
@@ -43,7 +43,7 @@ class CanvasChannel < ApplicationCable::Channel
         action: 'modify_stroke',
         stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
         user: User.find_by(id: current_user).name,
-        canvas: stroke.canvas.name,
+        canvas_name: stroke.canvas.name,
         time: stroke.updated_at
     end
   end
@@ -58,7 +58,7 @@ class CanvasChannel < ApplicationCable::Channel
         stroke: stroke.as_json(except: [:user_id, :editor_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.user.name,
         editor: User.find_by(id: current_user).name,
-        canvas: stroke.canvas.name,
+        canvas_name: stroke.canvas.name,
         time: stroke.updated_at
     end
   end
@@ -92,7 +92,7 @@ class CanvasChannel < ApplicationCable::Channel
             action: 'add_image',
             image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
             user: canvas_image.user.name,
-            canvas: canvas_image.canvas.name,
+            canvas_name: canvas_image.canvas.name,
             time: canvas_image.updated_at
         else
           puts "[ERROR] CanvasChannel.add_image - error: #{canvas_image.errors.full_messages}"
@@ -114,7 +114,7 @@ class CanvasChannel < ApplicationCable::Channel
         action: 'modify_image',
         image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
         user: canvas_image.user.name,
-        canvas: canvas_image.canvas.name,
+        canvas_name: canvas_image.canvas.name,
         time: canvas_image.updated_at
     end
   end
@@ -139,7 +139,7 @@ class CanvasChannel < ApplicationCable::Channel
       action: 'remove_image',
       image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
       user: User.find_by(id: current_user).name,
-      canvas: canvas_image.canvas.name,
+      canvas_name: canvas_image.canvas.name,
       time: canvas_image.updated_at
   end
 
@@ -157,7 +157,7 @@ class CanvasChannel < ApplicationCable::Channel
         action: 'add_textbox',
         textbox: textbox.as_json(except: [:editor_id, :canvas_id, :created_at, :updated_at]),
         user: textbox.editor.name,
-        canvas: textbox.canvas.name,
+        canvas_name: textbox.canvas.name,
         time: textbox.updated_at
     else
       puts "[ERROR] CanvasChannel.add_textbox - error: #{textbox.errors.full_messages}"
@@ -177,7 +177,7 @@ class CanvasChannel < ApplicationCable::Channel
         action: 'modify_textbox',
         textbox: textbox.as_json(except: [:editor_id, :canvas_id, :created_at, :updated_at]),
         user: textbox.editor.name,
-        canvas: textbox.canvas.name,
+        canvas_name: textbox.canvas.name,
         time: textbox.updated_at
     end
   end
@@ -191,7 +191,7 @@ class CanvasChannel < ApplicationCable::Channel
         action: 'remove_textbox',
         textbox: textbox.as_json(except: [:editor_id, :canvas_id, :created_at, :updated_at]),
         user: textbox.editor.name,
-        canvas: textbox.canvas.name,
+        canvas_name: textbox.canvas.name,
         time: textbox.updated_at
     end
   end
