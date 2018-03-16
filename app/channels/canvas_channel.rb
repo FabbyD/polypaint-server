@@ -196,6 +196,19 @@ class CanvasChannel < ApplicationCable::Channel
     end
   end
 
+  def update_canvas(data)
+    content = data['content']
+    canvas = Canvas.find_by(id: content['canvas']['id'])
+    if canvas
+      canvas.update(content['canvas'])
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'update_canvas',
+        canvas: canvas.as_json(except: [:user_id, :created_at, :updated_at]),
+        user: canvas.user.name,
+        time: canvas.updated_at
+    end
+  end
+
   private
 
   def get_s3_path(url)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180311165238) do
+ActiveRecord::Schema.define(version: 20180316021334) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -33,6 +33,8 @@ ActiveRecord::Schema.define(version: 20180311165238) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.float "width", default: 550.0
+    t.float "height", default: 310.0
     t.index ["user_id"], name: "index_canvases_on_user_id"
   end
 
@@ -80,6 +82,10 @@ ActiveRecord::Schema.define(version: 20180311165238) do
     t.bigint "editor_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.float "width"
+    t.float "height"
+    t.string "color", limit: 6
+    t.float "font_size"
     t.index ["canvas_id"], name: "index_textboxes_on_canvas_id"
     t.index ["editor_id"], name: "index_textboxes_on_editor_id"
   end

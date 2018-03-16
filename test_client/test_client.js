@@ -1,5 +1,5 @@
-var exampleSocket = new WebSocket("wss://polypaint-pro-staging.herokuapp.com/cable?user_id=1");
-//var exampleSocket = new WebSocket("ws://localhost:3000/cable?user_id=1");
+//var exampleSocket = new WebSocket("wss://polypaint-pro-staging.herokuapp.com/cable?user_id=1");
+var exampleSocket = new WebSocket("ws://localhost:3000/cable?user_id=1");
 
 var CHANNEL = "CanvasChannel"
 var ROOM = "Patate"
@@ -130,7 +130,11 @@ function send_textbox() {
     content: "Une belle textbox",
     pos_x: 50,
     pos_y: 50,
-    local_id: Math.floor(Math.random()*999999)
+    local_id: Math.floor(Math.random()*999999),
+    width: 350.0,
+    height: 350.0,
+    color: "FF0000",
+    font_size: 18.0
   }
   var content = {
     textbox: textbox,
@@ -148,7 +152,11 @@ function modify_textbox(id) {
     id: id,
     content: "Une belle textbox modifiée",
     pos_x: 100,
-    pos_y: 50
+    pos_y: 50,
+    width: 350.0,
+    height: 150.0,
+    color: "0000FF",
+    font_size: 10.0
   }
   var content = {
     textbox: textbox,
@@ -165,7 +173,7 @@ function remove_textbox(id) {
   var textbox = {
     id: id,
     content: "Une belle textbox modifiée",
-    pos_x: 100,
+    pos_x: 200,
     pos_y: 50
   }
   var content = {
@@ -179,6 +187,21 @@ function remove_textbox(id) {
   send("message", CHANNEL, ROOM, data)
 }
 
+function update_canvas(id) {
+  var canvas = {
+    id: id,
+    width: 200,
+    height: 200
+  }
+  var content = {
+    canvas: canvas
+  }
+  var data = JSON.stringify({
+    action: "update_canvas",
+    content: content
+  })
+  send("message", CHANNEL, ROOM, data)
+}
 
 function previewFile() {
   var preview = document.querySelector('img');
@@ -203,7 +226,7 @@ exampleSocket.onmessage = function (event) {
   if (data.type == "confirm_subscription") {
   	var input = document.querySelector('input[type=file]');
     input.style.display = 'block'
-    send_textbox()
+    update_canvas(1)
   } else if (data.type == null) {
     action = data.message.action 
     if (action == 'draw') {
