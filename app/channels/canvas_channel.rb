@@ -42,7 +42,7 @@ class CanvasChannel < ApplicationCable::Channel
       ActionCable.server.broadcast 'canvas_channel',
         action: 'modify_stroke',
         stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
-        user: User.find_by(id: current_user).name,
+        user: stroke.editor.name,
         canvas_name: stroke.canvas.name,
         time: stroke.updated_at
     end
@@ -190,7 +190,7 @@ class CanvasChannel < ApplicationCable::Channel
       ActionCable.server.broadcast 'canvas_channel',
         action: 'remove_textbox',
         textbox: textbox.as_json(except: [:editor_id, :canvas_id, :created_at, :updated_at]),
-        user: textbox.editor.name,
+        user: User.find_by(id: current_user).name,
         canvas_name: textbox.canvas.name,
         time: textbox.updated_at
     end
@@ -204,7 +204,7 @@ class CanvasChannel < ApplicationCable::Channel
       ActionCable.server.broadcast 'canvas_channel',
         action: 'update_canvas',
         canvas: canvas.as_json(except: [:user_id, :created_at, :updated_at]),
-        user: canvas.user.name,
+        user: User.find_by(id: current_user).name,
         time: canvas.updated_at
     end
   end
