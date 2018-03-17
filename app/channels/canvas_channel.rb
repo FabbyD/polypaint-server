@@ -206,7 +206,9 @@ class CanvasChannel < ApplicationCable::Channel
   def modify_textbox(data)
     content = data['content']
     # Make sure to save text in LF format
-    content['textbox']['content'].gsub!("\r\n", "\n")
+    if content['textbox'].key? 'content'
+      content['textbox']['content'].gsub!("\r\n", "\n")
+    end
     textbox = Textbox.find_by(id: content['textbox']['id'])
     if textbox
       textbox.editor = User.find_by(id: current_user)
