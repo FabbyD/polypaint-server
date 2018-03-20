@@ -1,4 +1,4 @@
 class CanvasImage < ApplicationRecord
   belongs_to :user
-  belongs_to :canvas
+  belongs_to :layer
 end

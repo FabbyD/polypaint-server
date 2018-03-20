@@ -12,16 +12,99 @@ class CanvasChannel < ApplicationCable::Channel
     # Any cleanup needed when channel is unsubscribed
   end
 
+  def add_canvas(data)
+    content = data['content']
+    user = User.find_by(id: current_user)
+    canvas = Canvas.new(content['canvas'])
+    canvas.user = user
+    if canvas.save
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'add_canvas',
+        canvas: canvas.as_json(except: [:user_id, :created_at, :updated_at]),
+        user: user.name,
+        time: canvas.updated_at
+    else
+      puts "[ERROR] CanvasChannel.add_canvas - error: #{canvas.errors.full_messages}"
+    end
+
+  end
+
+  def add_layer(data)
+    content = data['content']
+    user = User.find_by(id: current_user)
+    layer = Layer.new(content['layer'])
+    layer.canvas = Canvas.find_by(id: content['canvas_id'])
+    puts "CanvasChannel.add_layer - layer: #{layer.inspect}"
+    if layer.save
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'add_layer',
+        layer: layer.as_json(except: [:canvas_id, :created_at, :updated_at]),
+        canvas_name: layer.canvas.name,
+        user: user.name,
+        time: layer.updated_at
+    else
+      puts "[ERROR] CanvasChannel.add_layer - error: #{stroke.errors.full_messages}"
+    end
+  end
+
+  def update_layer(data)
+    content = data['content']
+    user = User.find_by(id: current_user)
+    layer = Layer.find_by(uuid: content['layer']['uuid'])
+    puts "CanvasChannel.move_layer - layer: #{layer.inspect}"
+    if layer
+      # shift other layers and assing new index
+      newIndex = content['layer']['index']
+      layers = []
+      if layer.index < newIndex
+        layers = Layer.where("index > ? AND index <= ?", layer.index, newIndex)
+      else
+        layers = Layer.where("index >= ? AND index < ?", newIndex, layer.index)
+      end
+      incr = newIndex > layer.index ? -1 : 1
+      for l in layers
+        l.index += incr
+        l.save
+      end
+      layer.index = newIndex
+      layer.save
+
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'move_layer',
+        layer: layer.as_json(except: [:canvas_id, :created_at, :updated_at]),
+        canvas_name: layer.canvas.name,
+        user: user.name,
+        time: layer.updated_at
+    else
+      puts "[WARNING] CanvasChannel.move_layer - could not find the layer to move "
+    end
+  end
+
+  def remove_layer(data)
+    content = data['content']
+    user = User.find_by(id: current_user)
+    layer = Layer.find_by(uuid: content['layer']['uuid'])
+    if layer
+      layer.destroy
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'remove_layer',
+        layer: layer.as_json(except: [:canvas_id, :created_at, :updated_at]),
+        canvas_name: layer.canvas.name,
+        user: user.name,
+        time: layer.updated_at
+    end
+  end
+
   def add_strokes(data)
     content = data['content']
     user = User.find_by(id: current_user)
-    canvas = Canvas.find_by(id: content['canvas_id'])
     jstrokes = content['strokes']
     jstrokes = jstrokes.map do |jstroke| 
-      jstroke[:user_id] = user.id
-      jstroke[:editor_id] = user.id
-      jstroke[:canvas_id] = canvas.id
-      jstroke
+      layer = Layer.find_by(uuid: jstroke['layer_uuid'])
+      jstroke["user_id"] = user.id
+      jstroke["editor_id"] = user.id
+      jstroke["layer_id"] = layer.id
+      jstroke.except("layer_uuid")
     end
     strokes = Stroke.create(jstrokes)
 
@@ -36,21 +119,23 @@ class CanvasChannel < ApplicationCable::Channel
 
     if valid
       jstrokes = strokes.map do |s|
-        s.as_json(except: ['user_id', 'editor_id', 'canvas_id', 'created_at', 'updated_at'])
+        jstroke = s.as_json(except: ['user_id', 'editor_id', 'layer_id', 'created_at', 'updated_at'])
+        jstroke['layer_uuid'] = s.layer.uuid
+        jstroke
       end
       ActionCable.server.broadcast 'canvas_channel',
         action: 'add_strokes',
         strokes: jstrokes,
         user: user.name,
         editor: user.name,
-        canvas_name: canvas.name,
+        canvas_name: strokes[0].layer.canvas.name,
         time: strokes[-1].updated_at
     else
       puts "[ERROR] CanvasChannel.add_strokes - error: #{errors}"
     end
   end
 
-  def draw(data)
+  def add_stroke(data)
     content = data['content']
     user = User.find_by(id: current_user)
     stroke = Stroke.new(content['stroke'])
@@ -71,7 +156,7 @@ class CanvasChannel < ApplicationCable::Channel
     end  
   end
 
-  def modify_stroke(data)
+  def update_stroke(data)
     content = data['content']
     stroke = Stroke.find_by(id: content['stroke']['id'])
     if stroke
@@ -86,17 +171,46 @@ class CanvasChannel < ApplicationCable::Channel
     end
   end
 
-  def erase(data)
+  def update_strokes(data)
+    content = data['content']
+    user = User.find_by(id: current_user)
+    jstrokes = content['strokes']
+    
+    ids = {}
+    for jstroke in jstrokes
+      layer = Layer.find_by(uuid: jstroke['layer_uuid'])
+      jstroke['user_id'] = user.id
+      jstroke['editor_id'] = user.id
+      jstroke['layer_id'] = layer.id
+      ids[jstroke['id']] = jstroke.except("layer_uuid")
+    end
+
+    strokes = Stroke.update(ids.keys, ids.values)
+    jstrokes = strokes.map do |s|
+        jstroke = s.as_json(except: ['user_id', 'editor_id', 'layer_id', 'created_at', 'updated_at'])
+        jstroke['layer_uuid'] = s.layer.uuid
+        jstroke
+    end
+    ActionCable.server.broadcast 'canvas_channel',
+      action: 'update_strokes',
+      strokes: jstrokes,
+      user: user.name,
+      editor: user.name,
+      canvas_name: strokes[0].layer.canvas.name,
+      time: strokes[-1].updated_at
+  end
+
+  def remove_stroke(data)
     content = data['content']
     stroke = Stroke.find_by(id: content['stroke']['id'])
     if stroke
       stroke.destroy
       ActionCable.server.broadcast 'canvas_channel',
-        action: 'erase',
+        action: 'remove_stroke',
         stroke: stroke.as_json(except: [:user_id, :editor_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.user.name,
         editor: User.find_by(id: current_user).name,
-        canvas_name: stroke.canvas.name,
+        canvas_name: stroke.layer.canvas.name,
         time: stroke.updated_at
     end
   end

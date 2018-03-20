@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180316223114) do
+ActiveRecord::Schema.define(version: 20180319152331) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -19,7 +19,6 @@ ActiveRecord::Schema.define(version: 20180316223114) do
     t.integer "pos_x", null: false
     t.integer "pos_y", null: false
     t.bigint "user_id"
-    t.bigint "canvas_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "url", null: false
@@ -27,7 +26,8 @@ ActiveRecord::Schema.define(version: 20180316223114) do
     t.float "height"
     t.float "rotation", default: 0.0
     t.string "local_id", null: false
-    t.index ["canvas_id"], name: "index_canvas_images_on_canvas_id"
+    t.bigint "layer_id", null: false
+    t.index ["layer_id"], name: "index_canvas_images_on_layer_id"
     t.index ["user_id"], name: "index_canvas_images_on_user_id"
   end
 
@@ -48,6 +48,15 @@ ActiveRecord::Schema.define(version: 20180316223114) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "layers", force: :cascade do |t|
+    t.string "uuid", null: false
+    t.integer "index", null: false
+    t.bigint "canvas_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["canvas_id"], name: "index_layers_on_canvas_id"
+  end
+
   create_table "messages", force: :cascade do |t|
     t.text "content"
     t.bigint "user_id"
@@ -66,7 +75,6 @@ ActiveRecord::Schema.define(version: 20180316223114) do
     t.integer "height", null: false
     t.integer "shape", null: false
     t.bigint "user_id"
-    t.bigint "canvas_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "stroke_type", default: 0, null: false
@@ -74,8 +82,9 @@ ActiveRecord::Schema.define(version: 20180316223114) do
     t.bigint "editor_id"
     t.float "radius_x"
     t.float "radius_y"
-    t.index ["canvas_id"], name: "index_strokes_on_canvas_id"
+    t.bigint "layer_id", null: false
     t.index ["editor_id"], name: "index_strokes_on_editor_id"
+    t.index ["layer_id"], name: "index_strokes_on_layer_id"
     t.index ["user_id"], name: "index_strokes_on_user_id"
   end
 
@@ -84,7 +93,6 @@ ActiveRecord::Schema.define(version: 20180316223114) do
     t.integer "pos_x", null: false
     t.integer "pos_y", null: false
     t.string "local_id", null: false
-    t.bigint "canvas_id", null: false
     t.bigint "editor_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -93,8 +101,9 @@ ActiveRecord::Schema.define(version: 20180316223114) do
     t.string "color", limit: 6
     t.float "font_size"
     t.float "rotation", default: 0.0
-    t.index ["canvas_id"], name: "index_textboxes_on_canvas_id"
+    t.bigint "layer_id", null: false
     t.index ["editor_id"], name: "index_textboxes_on_editor_id"
+    t.index ["layer_id"], name: "index_textboxes_on_layer_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -104,14 +113,15 @@ ActiveRecord::Schema.define(version: 20180316223114) do
     t.datetime "updated_at", null: false
   end
 
-  add_foreign_key "canvas_images", "canvases"
+  add_foreign_key "canvas_images", "layers"
   add_foreign_key "canvas_images", "users"
   add_foreign_key "canvases", "users"
+  add_foreign_key "layers", "canvases"
   add_foreign_key "messages", "chatrooms"
   add_foreign_key "messages", "users"
-  add_foreign_key "strokes", "canvases"
+  add_foreign_key "strokes", "layers"
   add_foreign_key "strokes", "users"
   add_foreign_key "strokes", "users", column: "editor_id"
-  add_foreign_key "textboxes", "canvases"
+  add_foreign_key "textboxes", "layers"
   add_foreign_key "textboxes", "users", column: "editor_id"
 end
