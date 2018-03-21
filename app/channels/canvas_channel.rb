@@ -50,7 +50,7 @@ class CanvasChannel < ApplicationCable::Channel
     content = data['content']
     user = User.find_by(id: current_user)
     layer = Layer.find_by(uuid: content['layer']['uuid'])
-    puts "CanvasChannel.move_layer - layer: #{layer.inspect}"
+    puts "CanvasChannel.update_layer - layer: #{layer.inspect}"
     if layer
       # shift other layers and assing new index
       newIndex = content['layer']['index']
@@ -69,7 +69,7 @@ class CanvasChannel < ApplicationCable::Channel
       layer.save
 
       ActionCable.server.broadcast 'canvas_channel',
-        action: 'move_layer',
+        action: 'update_layer',
         layer: layer.as_json(except: [:canvas_id, :created_at, :updated_at]),
         canvas_name: layer.canvas.name,
         user: user.name,
