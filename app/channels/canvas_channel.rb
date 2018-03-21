@@ -204,7 +204,7 @@ class CanvasChannel < ApplicationCable::Channel
     stroke = Stroke.find_by(id: content['stroke']['id'])
     if stroke
       stroke.destroy
-      jstroke = s.as_json(except: ['user_id', 'editor_id', 'layer_id', 'created_at', 'updated_at'])
+      jstroke = stroke.as_json(except: ['user_id', 'editor_id', 'layer_id', 'created_at', 'updated_at'])
       jstroke['layer_uuid'] = stroke.layer.uuid
       ActionCable.server.broadcast 'canvas_channel',
         action: 'remove_stroke',
