@@ -26,7 +26,6 @@ class CanvasChannel < ApplicationCable::Channel
     else
       puts "[ERROR] CanvasChannel.add_canvas - error: #{canvas.errors.full_messages}"
     end
-
   end
 
   def add_layer(data)
@@ -176,6 +175,7 @@ class CanvasChannel < ApplicationCable::Channel
     user = User.find_by(id: current_user)
     jstrokes = content['strokes']
     
+    p "yay"
     ids = {}
     for jstroke in jstrokes
       layer = Layer.find_by(uuid: jstroke['layer_uuid'])
@@ -184,6 +184,7 @@ class CanvasChannel < ApplicationCable::Channel
       jstroke['layer_id'] = layer.id
       ids[jstroke['id']] = jstroke.except("layer_uuid")
     end
+    puts ids
 
     strokes = Stroke.update(ids.keys, ids.values)
     jstrokes = strokes.map do |s|
@@ -235,16 +236,18 @@ class CanvasChannel < ApplicationCable::Channel
         obj.upload_file(file.path)
         puts "CanvasChannel.add_image - uploaded to #{obj.public_url}"
 
-        canvas_image = CanvasImage.new(content['image'].except('data'))
+        canvas_image = CanvasImage.new(content['image'].except('data', 'layer_uuid'))
         canvas_image.url = obj.public_url
         canvas_image.user = User.find_by(id: current_user)
-        canvas_image.canvas = Canvas.find_by(id: content['canvas_id'])
+        canvas_image.layer = Layer.find_by(uuid: content['image']['layer_uuid'])
         if canvas_image.save
+          jimage = canvas_image.as_json(except: [:user_id, :layer_id, :created_at, :updated_at])
+          jimage['layer_uuid'] = canvas_image.layer.uuid
           ActionCable.server.broadcast 'canvas_channel',
             action: 'add_image',
-            image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+            image: jimage,
             user: canvas_image.user.name,
-            canvas_name: canvas_image.canvas.name,
+            canvas_name: canvas_image.layer.canvas.name,
             time: canvas_image.updated_at
         else
           puts "[ERROR] CanvasChannel.add_image - error: #{canvas_image.errors.full_messages}"
@@ -256,17 +259,19 @@ class CanvasChannel < ApplicationCable::Channel
     end
   end
 
-  def modify_image(data)
+  def update_image(data)
     content = data['content']
     canvas_image = CanvasImage.find_by(id: content['image']['id'])
     if canvas_image
       canvas_image.user = User.find_by(id: current_user)
       canvas_image.update(content['image'])
+      jimage = canvas_image.as_json(except: [:user_id, :layer_id, :created_at, :updated_at])
+      jimage['layer_uuid'] = canvas_image.layer.uuid
       ActionCable.server.broadcast 'canvas_channel',
-        action: 'modify_image',
-        image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+        action: 'update_image',
+        image: jimage,
         user: canvas_image.user.name,
-        canvas_name: canvas_image.canvas.name,
+        canvas_name: canvas_image.layer.canvas.name,
         time: canvas_image.updated_at
     end
   end
@@ -287,11 +292,13 @@ class CanvasChannel < ApplicationCable::Channel
     obj = S3_BUCKET.object(get_s3_path(canvas_image.url))
     obj.delete
     canvas_image.destroy
+    jimage = canvas_image.as_json(except: [:user_id, :layer_id, :created_at, :updated_at])
+    jimage['layer_uuid'] = canvas_image.layer.uuid
     ActionCable.server.broadcast 'canvas_channel',
       action: 'remove_image',
-      image: canvas_image.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
+      image: jimage,
       user: User.find_by(id: current_user).name,
-      canvas_name: canvas_image.canvas.name,
+      canvas_name: canvas_image.layer.canvas.name,
       time: canvas_image.updated_at
   end
 
@@ -300,16 +307,18 @@ class CanvasChannel < ApplicationCable::Channel
     # Make sure to save text in LF format
     content['textbox']['content'].gsub!("\r\n", "\n")
     user = User.find_by(id: current_user)
-    textbox = Textbox.new(content['textbox'])
+    textbox = Textbox.new(content['textbox'].except('layer_uuid'))
     textbox.editor = user
-    textbox.canvas = Canvas.find_by(id: content['canvas_id'])
+    textbox.layer = Layer.find_by(uuid: content['textbox']['layer_uuid'])
     puts "CanvasChannel.add_textbox - textbox: #{textbox.inspect}"
     if textbox.save
+      jtextbox = textbox.as_json(except: [:editor_id, :layer_id, :created_at, :updated_at])
+      jtextbox["layer_uuid"] = textbox.layer.uuid
       ActionCable.server.broadcast 'canvas_channel',
         action: 'add_textbox',
-        textbox: textbox.as_json(except: [:editor_id, :canvas_id, :created_at, :updated_at]),
+        textbox: jtextbox,
         user: textbox.editor.name,
-        canvas_name: textbox.canvas.name,
+        canvas_name: textbox.layer.canvas.name,
         time: textbox.updated_at
     else
       puts "[ERROR] CanvasChannel.add_textbox - error: #{textbox.errors.full_messages}"
@@ -317,7 +326,7 @@ class CanvasChannel < ApplicationCable::Channel
     
   end
 
-  def modify_textbox(data)
+  def update_textbox(data)
     content = data['content']
     # Make sure to save text in LF format
     if content['textbox'].key? 'content'
@@ -326,13 +335,22 @@ class CanvasChannel < ApplicationCable::Channel
     textbox = Textbox.find_by(id: content['textbox']['id'])
     if textbox
       textbox.editor = User.find_by(id: current_user)
-      textbox.update(content['textbox'])
-      ActionCable.server.broadcast 'canvas_channel',
-        action: 'modify_textbox',
-        textbox: textbox.as_json(except: [:editor_id, :canvas_id, :created_at, :updated_at]),
-        user: textbox.editor.name,
-        canvas_name: textbox.canvas.name,
-        time: textbox.updated_at
+      if (content['textbox'].key? 'layer_uuid') 
+        textbox.layer = Layer.find_by(uuid: content['textbox']['layer_uuid'])
+      end
+      textbox.update(content['textbox'].except('layer_uuid'))
+      if textbox.errors.size > 0
+        puts "[ERROR] CanvasChannel.update_textbox - error: #{textbox.errors.full_messages}"
+      else
+        jtextbox = textbox.as_json(except: [:editor_id, :layer_id, :created_at, :updated_at])
+        jtextbox["layer_uuid"] = textbox.layer.uuid
+        ActionCable.server.broadcast 'canvas_channel',
+          action: 'update_textbox',
+          textbox: jtextbox,
+          user: textbox.editor.name,
+          canvas_name: textbox.layer.canvas.name,
+          time: textbox.updated_at
+      end
     end
   end
 
@@ -341,11 +359,13 @@ class CanvasChannel < ApplicationCable::Channel
     textbox = Textbox.find_by(id: content['textbox']['id'])
     if textbox
       textbox.destroy
+      jtextbox = textbox.as_json(except: [:editor_id, :layer_id, :created_at, :updated_at])
+      jtextbox["layer_uuid"] = textbox.layer.uuid
       ActionCable.server.broadcast 'canvas_channel',
         action: 'remove_textbox',
-        textbox: textbox.as_json(except: [:editor_id, :canvas_id, :created_at, :updated_at]),
+        textbox: jtextbox,
         user: User.find_by(id: current_user).name,
-        canvas_name: textbox.canvas.name,
+        canvas_name: textbox.layer.canvas.name,
         time: textbox.updated_at
     end
   end
