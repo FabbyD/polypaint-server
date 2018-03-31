@@ -50,7 +50,7 @@ class CanvasChannel < ApplicationCable::Channel
     content = data['content']
     user = User.find_by(id: current_user)
     layer = Layer.find_by(uuid: content['layer']['uuid'])
-    puts "CanvasChannel.move_layer - layer: #{layer.inspect}"
+    puts "CanvasChannel.update_layer - layer: #{layer.inspect}"
     if layer
       # shift other layers and assing new index
       newIndex = content['layer']['index']
@@ -69,7 +69,7 @@ class CanvasChannel < ApplicationCable::Channel
       layer.save
 
       ActionCable.server.broadcast 'canvas_channel',
-        action: 'move_layer',
+        action: 'update_layer',
         layer: layer.as_json(except: [:canvas_id, :created_at, :updated_at]),
         canvas_name: layer.canvas.name,
         user: user.name,
@@ -175,7 +175,6 @@ class CanvasChannel < ApplicationCable::Channel
     user = User.find_by(id: current_user)
     jstrokes = content['strokes']
     
-    p "yay"
     ids = {}
     for jstroke in jstrokes
       layer = Layer.find_by(uuid: jstroke['layer_uuid'])
@@ -184,7 +183,6 @@ class CanvasChannel < ApplicationCable::Channel
       jstroke['layer_id'] = layer.id
       ids[jstroke['id']] = jstroke.except("layer_uuid")
     end
-    puts ids
 
     strokes = Stroke.update(ids.keys, ids.values)
     jstrokes = strokes.map do |s|
@@ -206,9 +204,11 @@ class CanvasChannel < ApplicationCable::Channel
     stroke = Stroke.find_by(id: content['stroke']['id'])
     if stroke
       stroke.destroy
+      jstroke = stroke.as_json(except: ['user_id', 'editor_id', 'layer_id', 'created_at', 'updated_at'])
+      jstroke['layer_uuid'] = stroke.layer.uuid
       ActionCable.server.broadcast 'canvas_channel',
         action: 'remove_stroke',
-        stroke: stroke.as_json(except: [:user_id, :editor_id, :canvas_id, :created_at, :updated_at]),
+        stroke: jstroke,
         user: stroke.user.name,
         editor: User.find_by(id: current_user).name,
         canvas_name: stroke.layer.canvas.name,
