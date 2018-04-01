@@ -222,9 +222,9 @@ class CanvasChannel < ApplicationCable::Channel
       return
     end
 
-    url = save_image(content['image']['data'], 'canvas_images/')
+    url = upload_image(content['image']['data'], path: 'canvas_images/')
     canvas_image = CanvasImage.new(content['image'].except('data', 'layer_uuid'))
-    canvas_image.url = obj.public_url
+    canvas_image.url = url
     canvas_image.user = User.find_by(id: current_user)
     canvas_image.layer = Layer.find_by(uuid: content['image']['layer_uuid'])
     if canvas_image.save
@@ -356,11 +356,7 @@ class CanvasChannel < ApplicationCable::Channel
     content = data['content']
     canvas = Canvas.find_by(id: content['canvas']['id'])
     if canvas
-      if content['canvas']['thumbnail']
-        url = save_image(content['canvas']['thumbnail'], 'thumbnails')
-        canvas.thumbnail = url
-      end
-      canvas.update(content['canvas'].except(['thumbnail']))
+      canvas.update(content['canvas'])
       ActionCable.server.broadcast 'canvas_channel',
         action: 'update_canvas',
         canvas: canvas.as_json(except: [:user_id, :created_at, :updated_at]),
@@ -374,7 +370,6 @@ class CanvasChannel < ApplicationCable::Channel
     canvas = Canvas.find_by(id: content['canvas']['id'])
     if canvas
       if content['canvas']['thumbnail']
-        url = save_image(content['canvas']['thumbnail'], 'thumbnails')
         if canvas.thumbnail and canvas.thumbnail != ''
           path = get_s3_path(canvas.thumbnail)
           if path
@@ -383,6 +378,7 @@ class CanvasChannel < ApplicationCable::Channel
             obj.delete
           end
         end
+        url = upload_image(content['canvas']['thumbnail'], path: 'thumbnails/', filename: "canvas-#{canvas.id}.png")
         canvas.update(thumbnail: url)
       end
     end
@@ -398,7 +394,7 @@ class CanvasChannel < ApplicationCable::Channel
     end
   end
 
-  def save_image(data, path)
+  def upload_image(data, path:, filename: nil)
     encoded = split_base64 data
     decoded = Base64.decode64(encoded['data']) 
     filetype = encoded['filetype']
@@ -407,11 +403,14 @@ class CanvasChannel < ApplicationCable::Channel
     begin
       file.write(decoded)
       if file.size > 1.megabyte
-        puts "[ERROR] CanvasChannel.save_image - file is too large for upload: #{file.size}"
+        puts "[ERROR] CanvasChannel.save_image - file is too large for upload: #{file.size/1024} KB"
       else
-        puts "CanvasChannel.save_image - uploading image of size: #{file.size}"
+        puts "CanvasChannel.save_image - uploading image of size: #{file.size/1024} KB"
         path = path[-1] == '/' ? path : path + '/'
-        obj = S3_BUCKET.object(path + File.basename(file.path))
+        if !filename
+          filename = File.basename(file.path)
+        end
+        obj = S3_BUCKET.object(path + filename)
         obj.upload_file(file.path)
         puts "CanvasChannel.save_image - uploaded to #{obj.public_url}"
         url = obj.public_url
