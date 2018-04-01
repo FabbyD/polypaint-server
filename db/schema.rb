@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180331204454) do
+ActiveRecord::Schema.define(version: 20180401185910) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -71,6 +71,27 @@ ActiveRecord::Schema.define(version: 20180331204454) do
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
+  create_table "pixel_canvases", force: :cascade do |t|
+    t.string "name"
+    t.string "thumbnail"
+    t.bigint "user_id"
+    t.boolean "private", default: true
+    t.boolean "protected", default: false
+    t.string "password_digest"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_pixel_canvases_on_user_id"
+  end
+
+  create_table "pixels", force: :cascade do |t|
+    t.string "coord"
+    t.string "color", limit: 6
+    t.bigint "pixel_canvas_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pixel_canvas_id"], name: "index_pixels_on_pixel_canvas_id"
+  end
+
   create_table "strokes", force: :cascade do |t|
     t.integer "points_x", default: [], null: false, array: true
     t.integer "points_y", default: [], null: false, array: true
@@ -123,6 +144,8 @@ ActiveRecord::Schema.define(version: 20180331204454) do
   add_foreign_key "layers", "canvases"
   add_foreign_key "messages", "chatrooms"
   add_foreign_key "messages", "users"
+  add_foreign_key "pixel_canvases", "users"
+  add_foreign_key "pixels", "pixel_canvases"
   add_foreign_key "strokes", "layers"
   add_foreign_key "strokes", "users"
   add_foreign_key "strokes", "users", column: "editor_id"
