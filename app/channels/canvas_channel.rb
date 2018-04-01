@@ -376,12 +376,14 @@ class CanvasChannel < ApplicationCable::Channel
       if content['canvas']['thumbnail']
         url = save_image(content['canvas']['thumbnail'], 'thumbnails')
         if canvas.thumbnail and canvas.thumbnail != ''
-          p 'deleting old thumbnail'
-          obj = S3_BUCKET.object(get_s3_path(canvas.thumbnail))
-          obj.delete
+          path = get_s3_path(canvas.thumbnail)
+          if path
+            puts "CanvasChannel.update_canvas_thumbnail - deleting previous thumbnail"
+            obj = S3_BUCKET.object(path)
+            obj.delete
+          end
         end
-        canvas.thumbnail = url
-        canvas.save
+        canvas.update(thumbnail: url)
       end
     end
   end
@@ -390,7 +392,10 @@ class CanvasChannel < ApplicationCable::Channel
 
   def get_s3_path(url)
     root = "https://#{S3_BUCKET.name}.s3.#{ENV['AWS_REGION']}.amazonaws.com/"
-    url.match("^" + root + "(.*)$")[1]
+    m = url.match("^" + root + "(.*)$")
+    if m
+      m[1]
+    end
   end
 
   def save_image(data, path)
