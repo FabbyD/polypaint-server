@@ -7,33 +7,36 @@ class PixelCanvasChannel < ApplicationCable::Channel
     # Any cleanup needed when channel is unsubscribed
   end
 
-  def add_pixels(data)
+  def update_pixels(data)
     content = data['content']
-    pixels = content['pixels']
-    color = pixels['color']
-    canvas_id = pixels['pixel_canvas_id']
+    pixels_x = content['pixel_canvas']['pixels_x']
+    pixels_y = content['pixel_canvas']['pixels_y']
+    color = content['pixel_canvas']['color']
+    id = content['pixel_canvas']['id']
 
-    # delete previous pixels value
-    Pixel.where(coord: pixels['coords']).delete_all
-
-    # add new values
-    # raw sql because rails does not do support batch inserts
-    now = DateTime.now
-    sql = "INSERT INTO pixels (coord, color, pixel_canvas_id, created_at, updated_at) VALUES "
-    sql += pixels['coords'].map do |coord|
-      "('#{coord}', '#{color}', '#{canvas_id}', '#{now}', '#{now}')"
-    end.join(", ")
-    sql += ';'
-    ActiveRecord::Base.connection.execute(sql)
-
-    #Pixel.transaction do
-    #  pixels['coords'].each do |coord|
-    #    Pixel.create(coord: coord, color: color, pixel_canvas_id: canvas_id)
-    #  end
-    #end
-
-  end
-
-  def remove_pixels(data)
+    ActiveRecord::Base.logger.silence do
+      canvas = PixelCanvas.find(id)
+      if canvas
+        pixels_x.zip(pixels_y).each do |x,y|
+          index = y * canvas.height + x
+          if index < canvas.height*canvas.width
+            canvas.pixels[index] = color
+          else
+            puts "[ERROR] PixelCanvas.udpate_pixels - woops trying to update outside of grid"
+          end
+        end
+        if canvas.save
+          ActionCable.server.broadcast 'pixel_canvas_channel',
+            action: 'update_pixels',
+            pixel_canvas: content['pixel_canvas'],
+            user: current_user.name,
+            time: canvas.updated_at
+        else
+          puts "[ERROR] PixelCanvasChannel.add_pixels - errors: #{canvas.errors.full_messages}"
+        end
+      else
+        puts "[ERROR] PixelCanvasChannel.add_pixels - could not find canvas"
+      end
+    end
   end
 end

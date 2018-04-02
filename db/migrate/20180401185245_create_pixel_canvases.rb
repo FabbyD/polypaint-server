@@ -7,6 +7,9 @@ class CreatePixelCanvases < ActiveRecord::Migration[5.1]
       t.boolean :private, default: true
       t.boolean :protected, default: false
       t.string :password_digest
+      t.integer :width, default: 400
+      t.integer :height, default: 400
+      t.string :pixels, array: true, limit: 6, default: Array.new(160000, 'FFFFFF')
 
       t.timestamps
     end
