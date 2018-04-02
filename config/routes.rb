@@ -7,4 +7,6 @@ Rails.application.routes.draw do
   get '/canvases/:id', to: 'canvases#show'
   get '/users/:user_name/canvases', to: 'canvases#indexByUser'
   post '/canvases/login', to: 'canvases#authenticate'
+
+  get '/pixel_canvases/:id', to: 'pixel_canvases#show'
 end

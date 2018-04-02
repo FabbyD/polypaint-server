@@ -1,4 +1,6 @@
 class PixelCanvasChannel < ApplicationCable::Channel
+  include CanvasHelper
+
   def subscribed
     stream_from "pixel_canvas_channel"
   end
@@ -9,34 +11,27 @@ class PixelCanvasChannel < ApplicationCable::Channel
 
   def update_pixels(data)
     content = data['content']
-    pixels_x = content['pixel_canvas']['pixels_x']
-    pixels_y = content['pixel_canvas']['pixels_y']
-    color = content['pixel_canvas']['color']
-    id = content['pixel_canvas']['id']
-
-    ActiveRecord::Base.logger.silence do
-      canvas = PixelCanvas.find(id)
-      if canvas
-        pixels_x.zip(pixels_y).each do |x,y|
-          index = y * canvas.height + x
-          if index < canvas.height*canvas.width
-            canvas.pixels[index] = color
-          else
-            puts "[ERROR] PixelCanvas.udpate_pixels - woops trying to update outside of grid"
-          end
+    canvas = PixelCanvas.find(content['pixel_canvas']['id'])
+    if canvas
+      if canvas.url and canvas.url != ''
+        path = get_s3_path(canvas.url)
+        if path
+          puts "PixelCanvasChannel.update_pixels - deleting previous bitmap"
+          S3_BUCKET.object(path).delete
         end
-        if canvas.save
-          ActionCable.server.broadcast 'pixel_canvas_channel',
-            action: 'update_pixels',
-            pixel_canvas: content['pixel_canvas'],
-            user: current_user.name,
-            time: canvas.updated_at
-        else
-          puts "[ERROR] PixelCanvasChannel.add_pixels - errors: #{canvas.errors.full_messages}"
-        end
-      else
-        puts "[ERROR] PixelCanvasChannel.add_pixels - could not find canvas"
       end
+      url = upload_image(content['pixel_canvas']['bitmap'], path: 'pixel-canvases/', filename: "pixel-canvas-#{canvas.id}.png")
+      if canvas.update(url: url)
+        ActionCable.server.broadcast 'pixel_canvas_channel',
+          action: 'update_pixels',
+          pixel_canvas: content['pixel_canvas'].except(['bitmap']),
+          user: current_user.name,
+          time: canvas.updated_at
+      else
+        puts "[ERROR] PixelCanvasChannel.add_pixels - errors: #{canvas.errors.full_messages}"
+      end
+    else
+      puts "[ERROR] PixelCanvasChannel.add_pixels - could not find canvas"
     end
   end
 end
