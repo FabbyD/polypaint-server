@@ -10,6 +10,16 @@ class CanvasChannel < ApplicationCable::Channel
 
   def unsubscribed
     # Any cleanup needed when channel is unsubscribed
+    
+    # clear that user's selection
+    Selection.new(current_user.id).clear
+
+    # TODO we could add a disconnected event
+    ActionCable.server.broadcast 'canvas_channel',
+      action: 'update_selection',
+      selection: {strokes: [], images: [], textboxes: []},
+      user: current_user.name,
+      time: DateTime.now()
   end
 
   def add_canvas(data)
