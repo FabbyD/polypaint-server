@@ -20,16 +20,17 @@ class CanvasesController < ApplicationController
   end
 
   def index
-    canvases = canvasSelect
-      .where(private: false)
+    canvases = canvasSelect.where(private: false)
+    pixel_canvases = pixelCanvasSelect.where(private: false)
     render status: :ok,
-      json: { canvases: canvases }.to_json
+      json: {
+        canvases: canvases,
+        pixel_canvases: pixel_canvases
+      }.to_json
   end
 
   def indexByUser
-    canvases = canvasSelect
-      .where('users.name = ?', params[:user_name])
-
+    canvases = canvasSelect.where('users.name = ?', params[:user_name])
     if params[:current_user] != params[:user_name]
       canvases = canvases.where(private: false)
     end
@@ -53,6 +54,13 @@ class CanvasesController < ApplicationController
     Canvas.select('canvases.id, canvases.name, canvases.description, canvases.thumbnail,
                   canvases.private, canvases.protected, canvases.width, canvases.height,
                   users.name as user_name, canvases.created_at, canvases.updated_at')
+      .joins(:user)
+  end
+
+  def pixelCanvasSelect
+    PixelCanvas.select('pixel_canvases.id, pixel_canvases.name, pixel_canvases.url, pixel_canvases.private,
+                        pixel_canvases.protected, pixel_canvases.width, pixel_canvases.height, users.name as user_name,
+                        pixel_canvases.created_at, pixel_canvases.updated_at')
       .joins(:user)
   end
 end
