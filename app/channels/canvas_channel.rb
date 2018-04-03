@@ -384,4 +384,14 @@ class CanvasChannel < ApplicationCable::Channel
     end
   end
 
+  def update_selection(data)
+    selected_elements = data['content']['selection'].symbolize_keys
+    selection = Selection.new(current_user.id, selected_elements)
+    ActionCable.server.broadcast 'canvas_channel',
+      action: 'update_selection',
+      selection: selected_elements,
+      user: current_user.name,
+      time: DateTime.now()
+  end
+
 end
