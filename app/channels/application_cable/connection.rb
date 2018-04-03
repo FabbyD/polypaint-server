@@ -8,6 +8,7 @@ module ApplicationCable
 
     def disconnect
       UserList.remove(current_user.id)
+      Selection.new(current_user.id).clear
     end
 
     private
