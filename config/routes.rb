@@ -9,4 +9,6 @@ Rails.application.routes.draw do
   post '/canvases/login', to: 'canvases#authenticate'
 
   get '/pixel_canvases/:id', to: 'pixel_canvases#show'
+
+  get '/chatrooms/:id', to: 'chatrooms#show'
 end
