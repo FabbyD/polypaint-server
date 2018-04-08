@@ -25,6 +25,10 @@ class CanvasChannel < ApplicationCable::Channel
   def add_canvas(data)
     content = data['content']
     user = User.find_by(id: current_user)
+    if not user
+      puts "[ERROR] CanvasChannel.add_stroke - could not find current user"
+      return
+    end
     canvas = Canvas.new(content['canvas'])
     canvas.user = user
     if canvas.save
@@ -41,6 +45,10 @@ class CanvasChannel < ApplicationCable::Channel
   def add_layer(data)
     content = data['content']
     user = User.find_by(id: current_user)
+    if not user
+      puts "[ERROR] CanvasChannel.add_stroke - could not find current user"
+      return
+    end
     layer = Layer.new(content['layer'])
     layer.canvas = Canvas.find_by(id: content['canvas_id'])
     puts "CanvasChannel.add_layer - layer: #{layer.inspect}"
@@ -59,6 +67,10 @@ class CanvasChannel < ApplicationCable::Channel
   def update_layer(data)
     content = data['content']
     user = User.find_by(id: current_user)
+    if not user
+      puts "[ERROR] CanvasChannel.add_stroke - could not find current user"
+      return
+    end
     layer = Layer.find_by(uuid: content['layer']['uuid'])
     puts "CanvasChannel.update_layer - layer: #{layer.inspect}"
     if layer
@@ -92,6 +104,10 @@ class CanvasChannel < ApplicationCable::Channel
   def remove_layer(data)
     content = data['content']
     user = User.find_by(id: current_user)
+    if not user
+      puts "[ERROR] CanvasChannel.add_stroke - could not find current user"
+      return
+    end
     layer = Layer.find_by(uuid: content['layer']['uuid'])
     if layer
       layer.destroy
@@ -106,10 +122,27 @@ class CanvasChannel < ApplicationCable::Channel
 
   def add_strokes(data)
     content = data['content']
+
     user = User.find_by(id: current_user)
+    if not user
+      puts "[ERROR] CanvasChannel.add_strokes - could not find current user"
+      return
+    end
+
     jstrokes = content['strokes']
     jstrokes = jstrokes.map do |jstroke| 
+      error_message = check_stroke(jstroke)
+      if error_message
+        puts "[ERROR] CanvasChannel.add_strokes - #{error_message}"
+        return
+      end
+
       layer = Layer.find_by(uuid: jstroke['layer_uuid'])
+      if not layer
+        puts "[ERROR] CanvasChannel.add_strokes - could not find layer with uuid: #{jstroke["layer_uuid"]}"
+        return
+      end
+
       jstroke["user_id"] = user.id
       jstroke["editor_id"] = user.id
       jstroke["layer_id"] = layer.id
@@ -147,6 +180,10 @@ class CanvasChannel < ApplicationCable::Channel
   def add_stroke(data)
     content = data['content']
     user = User.find_by(id: current_user)
+    if not user
+      puts "[ERROR] CanvasChannel.add_stroke - could not find current user"
+      return
+    end
     stroke = Stroke.new(content['stroke'])
     stroke.user = user
     stroke.editor = user
@@ -161,15 +198,20 @@ class CanvasChannel < ApplicationCable::Channel
         canvas_name: stroke.canvas.name,
         time: stroke.updated_at
     else
-      puts "[ERROR] CanvasChannel.draw - error: #{stroke.errors.full_messages}"
+      puts "[ERROR] CanvasChannel.add_stroke - error: #{stroke.errors.full_messages}"
     end  
   end
 
   def update_stroke(data)
     content = data['content']
+    user = User.find_by(id: current_user)
+    if not user
+      puts "[ERROR] CanvasChannel.update_stroke - could not find current user"
+      return
+    end
     stroke = Stroke.find_by(id: content['stroke']['id'])
     if stroke
-      stroke.editor = User.find_by(id: current_user)
+      stroke.editor = user
       stroke.update(content['stroke'])
       ActionCable.server.broadcast 'canvas_channel',
         action: 'modify_stroke',
@@ -177,17 +219,35 @@ class CanvasChannel < ApplicationCable::Channel
         user: stroke.editor.name,
         canvas_name: stroke.canvas.name,
         time: stroke.updated_at
+    else
+      puts "[ERROR] CanvasChannel.update_stroke - could not find stroke with id #{content['stroke']['id']}"
     end
   end
 
   def update_strokes(data)
     content = data['content']
     user = User.find_by(id: current_user)
+    if not user
+      puts "[ERROR] CanvasChannel.update_strokes - could not find current user"
+      return
+    end
+
     jstrokes = content['strokes']
     
     ids = {}
     for jstroke in jstrokes
+      error_msg = check_stroke(jstroke)
+      if error_msg
+        puts "[ERROR] CanvasChannel.update_strokes - error: #{error_msg}"
+        return
+      end
+
       layer = Layer.find_by(uuid: jstroke['layer_uuid'])
+      if not layer
+        puts "[ERROR] CanvasChannel.update_strokes - error: #{layer.errors.full_messages}"
+        return
+      end
+
       jstroke['user_id'] = user.id
       jstroke['editor_id'] = user.id
       jstroke['layer_id'] = layer.id

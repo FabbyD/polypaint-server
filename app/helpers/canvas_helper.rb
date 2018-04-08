@@ -43,4 +43,10 @@ module CanvasHelper
 
     return url
   end
+
+  def check_stroke(jstroke)
+    if not jstroke['layer_uuid']
+      return "layer_uuid missing"
+    end
+  end
 end
