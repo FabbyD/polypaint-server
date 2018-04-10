@@ -1,4 +1,33 @@
 class CanvasesController < ApplicationController
+  def create
+    canvas = Canvas.new(params.require(:canvas).permit(:name, :description, :width, :height, :private, :protected, :password))
+    canvas.user = User.find_by(name: params[:current_user])
+    if canvas.save
+      render status: :ok,
+        json: { canvas: canvas }
+    else
+      puts "[ERROR] CanvasesController.create - error: #{canvas.errors.full_messages}"
+      render status: :bad_request,
+        json: { errors: canvas.errors.full_messages }
+    end
+  end
+
+  def update
+    canvas = Canvas.find_by(id: params[:id])
+    if canvas
+      canvas.update(params.require(:canvas).permit(:name, :description, :height, :width, :password, :private, :protected))
+      if canvas.errors.full_messages.size > 0
+        puts "[ERROR] CanvasesController.update - error: #{canvas.errors.full_messages}"
+        render status: :bad_request,
+          json: { errors: canvas.errors.full_messages }
+      else
+        render status: :ok,
+          json: { canvas: canvas }
+      end
+    else
+    end
+  end
+
   def show
     canvas = canvasSelect
       .includes(layers: [:strokes, :canvas_images, :textboxes])
@@ -7,9 +36,9 @@ class CanvasesController < ApplicationController
       jcanvas = canvas.as_json()
       jcanvas["layers"] = canvas.layers.map do |layer|
         jlayer = layer.as_json()
-        jlayer["strokes"] = layer.strokes
-        jlayer["images"] = layer.canvas_images
-        jlayer["textboxes"] = layer.textboxes
+        jlayer["strokes"] = layer.strokes.order('strokes.created_at ASC')
+        jlayer["images"] = layer.canvas_images.order('canvas_images.created_at ASC')
+        jlayer["textboxes"] = layer.textboxes.order('textboxes.created_at ASC')
         jlayer
       end
       render status: :ok,
