@@ -486,7 +486,7 @@ class CanvasChannel < ApplicationCable::Channel
   private
 
   def get_stream_name(canvas)
-    return "canvas_channel:#{canvas.id}"
+    return "canvas_channel:#{@@clients[current_user.id]}"
   end
 
 end
