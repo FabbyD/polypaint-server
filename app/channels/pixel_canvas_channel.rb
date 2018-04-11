@@ -2,7 +2,14 @@ class PixelCanvasChannel < ApplicationCable::Channel
   include CanvasHelper
 
   def subscribed
-    stream_from "pixel_canvas_channel"
+    id = params[:room]
+    canvas = PixelCanvas.find_by(id: params[:room])
+    if canvas
+      stream_from get_stream_name(canvas)
+      stream_from "pixel_canvas_channel"
+    else
+      puts "[ERROR] PixelCanvasChannel.subscribed - could not get canvas id #{params[:room]}"
+    end
   end
 
   def unsubscribed
@@ -22,7 +29,7 @@ class PixelCanvasChannel < ApplicationCable::Channel
       end
       url = upload_image(content['pixel_canvas']['bitmap'], path: 'pixel-canvases/', filename: "pixel-canvas-#{canvas.id}.png")
       if canvas.update(url: url)
-        ActionCable.server.broadcast 'pixel_canvas_channel',
+        ActionCable.server.broadcast get_stream_name(canvas),
           action: 'update_pixels',
           pixel_canvas: content['pixel_canvas'].except(['bitmap']),
           user: current_user.name,
@@ -33,5 +40,11 @@ class PixelCanvasChannel < ApplicationCable::Channel
     else
       puts "[ERROR] PixelCanvasChannel.add_pixels - could not find canvas"
     end
+  end
+
+  private 
+
+  def get_stream_name(canvas)
+    "pixel_canvas_channel:#{canvas.id}"
   end
 end

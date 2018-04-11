@@ -4,8 +4,15 @@ require 'tempfile'
 class CanvasChannel < ApplicationCable::Channel
   include CanvasHelper
 
+  @@clients = {}
+
   def subscribed
-    stream_from "canvas_channel"
+    id = params[:room]
+    canvas = Canvas.find_by(id: params[:room])
+    if canvas
+      stream_from get_stream_name(canvas)
+      @@clients[current_user.id] = params[:room]
+    end
   end
 
   def unsubscribed
@@ -14,12 +21,19 @@ class CanvasChannel < ApplicationCable::Channel
     # clear that user's selection
     Selection.new(current_user.id).clear
 
-    # TODO we could add a disconnected event
-    ActionCable.server.broadcast 'canvas_channel',
-      action: 'update_selection',
-      selection: {strokes: [], images: [], textboxes: []},
-      user: current_user.name,
-      time: DateTime.now()
+    canvas = Canvas.find_by(id: @@clients[current_user.id])
+    if canvas
+      # TODO we could add an unsubsribed event
+      ActionCable.server.broadcast 'canvas_channel',
+        action: 'update_selection',
+        selection: {strokes: [], images: [], textboxes: []},
+        user: current_user.name,
+        time: DateTime.now()
+    else
+      puts "[ERROR] CanvasChannel.unsubscribed - Could not broadcast unsubscription for user #{current_user}"
+    end
+
+    @@clients.delete(current_user.id)
   end
 
   def add_canvas(data)
@@ -32,7 +46,7 @@ class CanvasChannel < ApplicationCable::Channel
     canvas = Canvas.new(content['canvas'])
     canvas.user = user
     if canvas.save
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(canvas),
         action: 'add_canvas',
         canvas: canvas.as_json(except: [:user_id, :created_at, :updated_at]),
         user: user.name,
@@ -53,14 +67,14 @@ class CanvasChannel < ApplicationCable::Channel
     layer.canvas = Canvas.find_by(id: content['canvas_id'])
     puts "CanvasChannel.add_layer - layer: #{layer.inspect}"
     if layer.save
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(layer.canvas),
         action: 'add_layer',
         layer: layer.as_json(except: [:canvas_id, :created_at, :updated_at]),
         canvas_name: layer.canvas.name,
         user: user.name,
         time: layer.updated_at
     else
-      puts "[ERROR] CanvasChannel.add_layer - error: #{stroke.errors.full_messages}"
+      puts "[ERROR] CanvasChannel.add_layer - error: #{layer.errors.full_messages}"
     end
   end
 
@@ -90,7 +104,7 @@ class CanvasChannel < ApplicationCable::Channel
       layer.index = newIndex
       layer.save
 
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(layer.canvas),
         action: 'update_layer',
         layer: layer.as_json(except: [:canvas_id, :created_at, :updated_at]),
         canvas_name: layer.canvas.name,
@@ -111,7 +125,7 @@ class CanvasChannel < ApplicationCable::Channel
     layer = Layer.find_by(uuid: content['layer']['uuid'])
     if layer
       layer.destroy
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(layer.canvas),
         action: 'remove_layer',
         layer: layer.as_json(except: [:canvas_id, :created_at, :updated_at]),
         canvas_name: layer.canvas.name,
@@ -165,7 +179,7 @@ class CanvasChannel < ApplicationCable::Channel
         jstroke['layer_uuid'] = s.layer.uuid
         jstroke
       end
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(strokes[0].layer.canvas),
         action: 'add_strokes',
         strokes: jstrokes,
         user: user.name,
@@ -190,12 +204,12 @@ class CanvasChannel < ApplicationCable::Channel
     stroke.canvas = Canvas.find_by(id: content['canvas_id'])
     puts "CanvasChannel.draw - stroke: #{stroke.inspect}"
     if stroke.save
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(stroke.layer.canvas),
         action: 'draw',
         stroke: stroke.as_json(except: [:user_id, :editor_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.user.name,
         editor: stroke.editor.name,
-        canvas_name: stroke.canvas.name,
+        canvas_name: stroke.layer.canvas.name,
         time: stroke.updated_at
     else
       puts "[ERROR] CanvasChannel.add_stroke - error: #{stroke.errors.full_messages}"
@@ -213,11 +227,11 @@ class CanvasChannel < ApplicationCable::Channel
     if stroke
       stroke.editor = user
       stroke.update(content['stroke'])
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(stroke.layer.canvas),
         action: 'modify_stroke',
         stroke: stroke.as_json(except: [:user_id, :canvas_id, :created_at, :updated_at]),
         user: stroke.editor.name,
-        canvas_name: stroke.canvas.name,
+        canvas_name: stroke.layer.canvas.name,
         time: stroke.updated_at
     else
       puts "[ERROR] CanvasChannel.update_stroke - could not find stroke with id #{content['stroke']['id']}"
@@ -260,7 +274,7 @@ class CanvasChannel < ApplicationCable::Channel
         jstroke['layer_uuid'] = s.layer.uuid
         jstroke
     end
-    ActionCable.server.broadcast 'canvas_channel',
+    ActionCable.server.broadcast get_stream_name(strokes[0].layer.canvas),
       action: 'update_strokes',
       strokes: jstrokes,
       user: user.name,
@@ -276,7 +290,7 @@ class CanvasChannel < ApplicationCable::Channel
       stroke.destroy
       jstroke = stroke.as_json(except: ['user_id', 'editor_id', 'layer_id', 'created_at', 'updated_at'])
       jstroke['layer_uuid'] = stroke.layer.uuid
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(stroke.layer.canvas),
         action: 'remove_stroke',
         stroke: jstroke,
         user: stroke.user.name,
@@ -300,7 +314,7 @@ class CanvasChannel < ApplicationCable::Channel
     if canvas_image.save
       jimage = canvas_image.as_json(except: [:user_id, :layer_id, :created_at, :updated_at])
       jimage['layer_uuid'] = canvas_image.layer.uuid
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(canvas_image.layer.canvas),
         action: 'add_image',
         image: jimage,
         user: canvas_image.user.name,
@@ -319,7 +333,7 @@ class CanvasChannel < ApplicationCable::Channel
       canvas_image.update(content['image'])
       jimage = canvas_image.as_json(except: [:user_id, :layer_id, :created_at, :updated_at])
       jimage['layer_uuid'] = canvas_image.layer.uuid
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(canvas_image.layer.canvas),
         action: 'update_image',
         image: jimage,
         user: canvas_image.user.name,
@@ -346,7 +360,7 @@ class CanvasChannel < ApplicationCable::Channel
     canvas_image.destroy
     jimage = canvas_image.as_json(except: [:user_id, :layer_id, :created_at, :updated_at])
     jimage['layer_uuid'] = canvas_image.layer.uuid
-    ActionCable.server.broadcast 'canvas_channel',
+    ActionCable.server.broadcast get_stream_name(canvas_image.layer.canvas),
       action: 'remove_image',
       image: jimage,
       user: User.find_by(id: current_user).name,
@@ -366,7 +380,7 @@ class CanvasChannel < ApplicationCable::Channel
     if textbox.save
       jtextbox = textbox.as_json(except: [:editor_id, :layer_id, :created_at, :updated_at])
       jtextbox["layer_uuid"] = textbox.layer.uuid
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(textbox.layer.canvas),
         action: 'add_textbox',
         textbox: jtextbox,
         user: textbox.editor.name,
@@ -396,7 +410,7 @@ class CanvasChannel < ApplicationCable::Channel
       else
         jtextbox = textbox.as_json(except: [:editor_id, :layer_id, :created_at, :updated_at])
         jtextbox["layer_uuid"] = textbox.layer.uuid
-        ActionCable.server.broadcast 'canvas_channel',
+        ActionCable.server.broadcast get_stream_name(textbox.layer.canvas),
           action: 'update_textbox',
           textbox: jtextbox,
           user: textbox.editor.name,
@@ -413,7 +427,7 @@ class CanvasChannel < ApplicationCable::Channel
       textbox.destroy
       jtextbox = textbox.as_json(except: [:editor_id, :layer_id, :created_at, :updated_at])
       jtextbox["layer_uuid"] = textbox.layer.uuid
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(textbox.layer.canvas),
         action: 'remove_textbox',
         textbox: jtextbox,
         user: User.find_by(id: current_user).name,
@@ -427,7 +441,7 @@ class CanvasChannel < ApplicationCable::Channel
     canvas = Canvas.find_by(id: content['canvas']['id'])
     if canvas
       canvas.update(content['canvas'])
-      ActionCable.server.broadcast 'canvas_channel',
+      ActionCable.server.broadcast get_stream_name(textbox.layer.canvas),
         action: 'update_canvas',
         canvas: canvas.as_json(except: [:user_id, :created_at, :updated_at]),
         user: User.find_by(id: current_user).name,
@@ -457,11 +471,22 @@ class CanvasChannel < ApplicationCable::Channel
   def update_selection(data)
     selected_elements = data['content']['selection'].symbolize_keys
     selection = Selection.new(current_user.id, selected_elements)
-    ActionCable.server.broadcast 'canvas_channel',
-      action: 'update_selection',
-      selection: selected_elements,
-      user: current_user.name,
-      time: DateTime.now()
+    canvas = Canvas.find_by(id: @@clients[current_user.id])
+    if canvas
+      ActionCable.server.broadcast get_stream_name(canvas),
+        action: 'update_selection',
+        selection: selected_elements,
+        user: current_user.name,
+        time: DateTime.now()
+    else
+      puts "[ERROR] CanvasChannel.update_selection - could not get canvas"
+    end
+  end
+
+  private
+
+  def get_stream_name(canvas)
+    return "canvas_channel:#{canvas.id}"
   end
 
 end
