@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   post '/users', to: 'users#create'
+  put '/users/:id', to: 'users#update'
   post   '/app-login',   to: 'logins#create'
+  post   '/login',   to: 'sessions#create'
   delete '/logout',  to: 'sessions#destroy' 
 
   get '/canvases', to: 'canvases#index'

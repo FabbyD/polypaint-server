@@ -16,6 +16,24 @@ class UsersController < ApplicationController
     end
   end
 
+  def update
+    if params[:user].blank?
+      return render status: :bad_request,
+        json: {:error => 'User param cannot be empty.'}.to_json
+    end
+
+    user = User.find(params[:id])
+    if user
+      if user.update(user_params)
+        head :ok
+      else
+        render_bad_request(user.errors.full_messages)
+      end
+    else
+      render status: :not_found
+    end
+  end
+
   private
 
     def user_params
