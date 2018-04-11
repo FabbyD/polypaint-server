@@ -1,8 +1,15 @@
+require 'securerandom'
+
 class CanvasesController < ApplicationController
   def create
     canvas = Canvas.new(params.require(:canvas).permit(:name, :description, :width, :height, :private, :protected, :password))
     canvas.user = User.find_by(name: params[:current_user])
+
     if canvas.save
+      # Create first layer too
+      layer = Layer.new(uuid: "layer:#{SecureRandom.uuid}", index: 0)
+      layer.canvas = canvas
+      layer.save
       render status: :ok,
         json: { canvas: canvas }
     else
