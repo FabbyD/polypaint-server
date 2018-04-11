@@ -67,12 +67,17 @@ class CanvasesController < ApplicationController
 
   def indexByUser
     canvases = canvasSelect.where('users.name = ?', params[:user_name])
+    pixel_canvases = pixelCanvasSelect.where('users.name = ?', params[:user_name])
     if params[:current_user] != params[:user_name]
       canvases = canvases.where(private: false)
+      pixel_canvases = pixel_canvases.where(private: false)
     end
 
     render status: :ok,
-      json: { canvases: canvases }.to_json
+      json: {
+        canvases: canvases,
+         pixel_canvases: pixel_canvases
+      }.to_json
   end
 
   def authenticate
