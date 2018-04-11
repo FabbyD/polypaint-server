@@ -10,8 +10,8 @@ class CanvasChannel < ApplicationCable::Channel
     id = params[:room]
     canvas = Canvas.find_by(id: params[:room])
     if canvas
-      stream_from get_stream_name(canvas)
       @@clients[current_user.id] = params[:room]
+      stream_from get_stream_name(canvas)
     end
   end
 
