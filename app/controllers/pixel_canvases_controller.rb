@@ -37,4 +37,13 @@ class PixelCanvasesController < ApplicationController
     else
     end
   end
+
+  def authenticate
+    canvas = PixelCanvas.find_by(id: params[:canvas][:id])
+    if canvas && canvas.authenticate(params[:canvas][:password])
+      head :ok
+    else
+			head :unauthorized
+    end
+  end
 end

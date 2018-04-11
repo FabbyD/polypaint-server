@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   get '/pixel_canvases/:id', to: 'pixel_canvases#show'
   post '/pixel_canvases', to: 'pixel_canvases#create'
   put '/pixel_canvases/:id', to: 'pixel_canvases#update'
+  post '/pixel_canvases/login', to: 'pixel_canvases#authenticate'
 
   get '/chatrooms/:id', to: 'chatrooms#show'
 end
