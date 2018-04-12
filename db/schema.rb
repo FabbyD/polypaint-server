@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180401185245) do
+ActiveRecord::Schema.define(version: 20180412154716) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -50,6 +50,8 @@ ActiveRecord::Schema.define(version: 20180401185245) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "canvas_id"
+    t.index ["canvas_id"], name: "index_chatrooms_on_canvas_id"
   end
 
   create_table "layers", force: :cascade do |t|
@@ -135,6 +137,7 @@ ActiveRecord::Schema.define(version: 20180401185245) do
   add_foreign_key "canvas_images", "layers"
   add_foreign_key "canvas_images", "users"
   add_foreign_key "canvases", "users"
+  add_foreign_key "chatrooms", "canvases"
   add_foreign_key "layers", "canvases"
   add_foreign_key "messages", "chatrooms"
   add_foreign_key "messages", "users"

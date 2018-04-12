@@ -9,7 +9,18 @@ class CanvasesController < ApplicationController
       # Create first layer too
       layer = Layer.new(uuid: "layer:#{SecureRandom.uuid}", index: 0)
       layer.canvas = canvas
-      layer.save
+      if not layer.save
+        puts "[ERROR] CanvasesController.create - layer error: #{layer.errors.full_messages}"
+      end
+
+      # Create chatroom
+      chatroom = Chatroom.new()
+      chatroom.canvas = canvas
+      chatroom.name = SecureRandom.uuid
+      if not chatroom.save
+        puts "[ERROR] CanvasesController.create - chatroom error: #{chatroom.errors.full_messages}"
+      end
+
       render status: :ok,
         json: { canvas: canvas }
     else
