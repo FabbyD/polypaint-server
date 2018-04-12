@@ -1,10 +1,16 @@
 class ChatroomChannel < ApplicationCable::Channel
   def subscribed
-    canvas = Canvas.find_by(id: params[:room])
-    if canvas
+    room = params[:room]
+    
+    if room == "Waiting Room"
       stream_from get_stream_name
     else
-      puts "ChatroomChannel.subscribed - could not find canvas with id #{params[:room]}"
+      canvas = Canvas.find_by(id: room)
+      if canvas
+        stream_from get_stream_name
+      else
+        puts "ChatroomChannel.subscribed - could not find canvas with id #{params[:room]}"
+      end
     end
   end
 
@@ -13,15 +19,23 @@ class ChatroomChannel < ApplicationCable::Channel
   end
 
   def message(data)
-    canvas = Canvas.find(params[:room])
-    if not canvas
-      puts "ChatroomChannel.message - could not find canvas with id #{params[:room]}"
-      return
+    room = params[:room]
+    chatroom = nil
+    if room == "Waiting Room"
+      chatroom = Chatroom.find_by(name: room)
+    else
+      canvas = Canvas.find(params[:room])
+      if canvas
+        chatroom = canvas.chatroom
+      else
+        puts "ChatroomChannel.message - could not find canvas with id #{params[:room]}"
+        return
+      end
     end
 
     message = Message.new(content: data["content"])
     message.user = User.find_by(id: current_user)
-    message.chatroom = canvas.chatroom
+    message.chatroom = chatroom
     if message.save
       ActionCable.server.broadcast get_stream_name,
         message: message.content,

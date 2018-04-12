@@ -7,17 +7,21 @@ canvas.user = user
 canvas.save
 p canvas
 
-chatroom = Chatroom.new(name: '1st Room')
-chatroom.canvas = canvas
-chatroom.save
-p chatroom
-
 layer = Layer.new()
 layer.canvas = canvas
 layer.index = 0
 layer.uuid = "layer:1stlayer"
 layer.save
 p layer
+
+chatroom = Chatroom.new(name: '1st Room')
+chatroom.canvas = canvas
+chatroom.save
+p chatroom
+
+waiting_room = Chatroom.new(name: 'Waiting Room')
+waiting_room.save
+p waiting_room
 
 pixel_canvas = PixelCanvas.new(name: '1st PixelCanvas')
 pixel_canvas.user = user
