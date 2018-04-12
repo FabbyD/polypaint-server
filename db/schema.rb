@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180412183511) do
+ActiveRecord::Schema.define(version: 20180412193144) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -91,7 +91,7 @@ ActiveRecord::Schema.define(version: 20180412183511) do
   create_table "strokes", force: :cascade do |t|
     t.integer "points_x", default: [], null: false, array: true
     t.integer "points_y", default: [], null: false, array: true
-    t.string "color", limit: 6, null: false
+    t.string "color", limit: 8, null: false
     t.integer "width", null: false
     t.integer "height", null: false
     t.integer "shape", null: false
@@ -119,7 +119,7 @@ ActiveRecord::Schema.define(version: 20180412183511) do
     t.datetime "updated_at", null: false
     t.float "width"
     t.float "height"
-    t.string "color", limit: 6
+    t.string "color", limit: 8
     t.float "font_size"
     t.float "rotation", default: 0.0
     t.bigint "layer_id", null: false

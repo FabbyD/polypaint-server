@@ -9,7 +9,7 @@ class ChatroomChannel < ApplicationCable::Channel
       if canvas
         stream_from get_stream_name
       else
-        puts "ChatroomChannel.subscribed - could not find canvas with id #{params[:room]}"
+        puts "[ERROR] ChatroomChannel.subscribed - could not find canvas with id #{params[:room]}"
       end
     end
   end
@@ -28,7 +28,7 @@ class ChatroomChannel < ApplicationCable::Channel
       if canvas
         chatroom = canvas.chatroom
       else
-        puts "ChatroomChannel.message - could not find canvas with id #{params[:room]}"
+        puts "[ERROR] ChatroomChannel.message - could not find canvas with id #{params[:room]}"
         return
       end
     end
@@ -42,7 +42,7 @@ class ChatroomChannel < ApplicationCable::Channel
         user: message.user.name,
         time: message.created_at
     else
-      puts "ChatroomChannel.message - error: #{message.errors.full_messages}"
+      puts "[ERROR] ChatroomChannel.message - error: #{message.errors.full_messages}"
     end
   end
 
