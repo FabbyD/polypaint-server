@@ -43,6 +43,8 @@ ActiveRecord::Schema.define(version: 20180413021632) do
     t.boolean "protected", default: false
     t.string "password_digest", default: ""
     t.string "thumbnail"
+    t.bigint "template_id"
+    t.index ["template_id"], name: "index_canvases_on_template_id"
     t.index ["user_id"], name: "index_canvases_on_user_id"
   end
 
@@ -112,7 +114,9 @@ ActiveRecord::Schema.define(version: 20180413021632) do
   create_table "templates", force: :cascade do |t|
     t.string "url"
     t.bigint "user_id"
-    t.boolean "private"
+    t.boolean "private", default: true
+    t.float "width", null: false
+    t.float "height", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_templates_on_user_id"
@@ -145,6 +149,7 @@ ActiveRecord::Schema.define(version: 20180413021632) do
 
   add_foreign_key "canvas_images", "layers"
   add_foreign_key "canvas_images", "users"
+  add_foreign_key "canvases", "templates"
   add_foreign_key "canvases", "users"
   add_foreign_key "chatrooms", "canvases"
   add_foreign_key "layers", "canvases"

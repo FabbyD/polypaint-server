@@ -2,7 +2,7 @@ require 'securerandom'
 
 class CanvasesController < ApplicationController
   def create
-    canvas = Canvas.new(params.require(:canvas).permit(:name, :description, :width, :height, :private, :protected, :password))
+    canvas = Canvas.new(params.require(:canvas).permit(:name, :description, :width, :height, :private, :protected, :password, :template_id))
     canvas.user = User.find_by(name: params[:current_user])
 
     if canvas.save
@@ -105,8 +105,9 @@ class CanvasesController < ApplicationController
   def canvasSelect
     Canvas.select('canvases.id, canvases.name, canvases.description, canvases.thumbnail,
                   canvases.private, canvases.protected, canvases.width, canvases.height,
-                  users.name as user_name, canvases.created_at, canvases.updated_at')
+                  users.name as user_name, templates.url as template_url, canvases.created_at, canvases.updated_at')
       .joins(:user)
+      .joins(:template)
   end
 
   def pixelCanvasSelect

@@ -1,5 +1,6 @@
 class PixelCanvasChannel < ApplicationCable::Channel
   include CanvasHelper
+  include FileUploadHelper
 
   def subscribed
     id = params[:room]

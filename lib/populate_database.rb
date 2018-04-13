@@ -27,3 +27,8 @@ pixel_canvas = PixelCanvas.new(name: '1st PixelCanvas')
 pixel_canvas.user = user
 pixel_canvas.save
 p pixel_canvas
+
+# Initialize default templates
+p Template.create(url: "https://s3.ca-central-1.amazonaws.com/polypaint-pro-staging/templates/defaults/timon-pumbaa.jpg", width: 700, height: 980)
+p Template.create(url: "https://s3.ca-central-1.amazonaws.com/polypaint-pro-staging/templates/defaults/meme.png", width: 640, height: 400)
+p Template.create(url: "https://s3.ca-central-1.amazonaws.com/polypaint-pro-staging/templates/defaults/fade.png", width: 640, height: 400)

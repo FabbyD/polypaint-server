@@ -3,6 +3,7 @@ require 'tempfile'
 
 class CanvasChannel < ApplicationCable::Channel
   include CanvasHelper
+  include FileUploadHelper
 
   @@clients = {}
 
