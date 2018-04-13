@@ -18,4 +18,7 @@ Rails.application.routes.draw do
   post '/pixel_canvases/login', to: 'pixel_canvases#authenticate'
 
   get '/chatrooms/:id', to: 'chatrooms#show'
+
+  get '/users/:id/templates', to: 'templates#index'
+  post '/users/:id/templates', to: 'templates#create'
 end
