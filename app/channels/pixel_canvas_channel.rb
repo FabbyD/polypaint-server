@@ -27,8 +27,8 @@ class PixelCanvasChannel < ApplicationCable::Channel
           S3_BUCKET.object(path).delete
         end
       end
-      url = upload_image(content['pixel_canvas']['bitmap'], path: 'pixel-canvases/', filename: "pixel-canvas-#{canvas.id}.png")
-      if canvas.update(url: url)
+      #url = upload_image(content['pixel_canvas']['bitmap'], path: 'pixel-canvases/', filename: "pixel-canvas-#{canvas.id}.png")
+      if true #canvas.update(url: url)
         ActionCable.server.broadcast get_stream_name(canvas),
           action: 'update_pixels',
           pixel_canvas: content['pixel_canvas'].except(['bitmap']),
