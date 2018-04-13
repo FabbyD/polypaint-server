@@ -33,8 +33,8 @@ class TemplatesController < ApplicationController
 
   def index
     user = User.find(params[:id])
-    default_templates = Template.select('templates.id, templates.url, templates.private, templates.created_at, templates.updated_at').where(user_id: nil)
-    public_templates = Template.select('templates.id, templates.url, users.name as user_name, templates.private, templates.created_at, templates.updated_at')
+    default_templates = Template.select('templates.id, templates.url, templates.private, templates.width, templates.height, templates.created_at, templates.updated_at').where(user_id: nil)
+    public_templates = Template.select('templates.id, templates.url, users.name as user_name, templates.private, templates.width, templates.height, templates.created_at, templates.updated_at')
       .joins(:user).where('templates.private = ? OR templates.user_id = ?', false, user.id)
 
     render status: :ok,
