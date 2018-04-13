@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180412193144) do
+ActiveRecord::Schema.define(version: 20180413164543) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -43,6 +43,8 @@ ActiveRecord::Schema.define(version: 20180412193144) do
     t.boolean "protected", default: false
     t.string "password_digest", default: ""
     t.string "thumbnail"
+    t.bigint "template_id"
+    t.index ["template_id"], name: "index_canvases_on_template_id"
     t.index ["user_id"], name: "index_canvases_on_user_id"
   end
 
@@ -60,6 +62,7 @@ ActiveRecord::Schema.define(version: 20180412193144) do
     t.bigint "canvas_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name"
     t.index ["canvas_id"], name: "index_layers_on_canvas_id"
   end
 
@@ -109,6 +112,17 @@ ActiveRecord::Schema.define(version: 20180412193144) do
     t.index ["user_id"], name: "index_strokes_on_user_id"
   end
 
+  create_table "templates", force: :cascade do |t|
+    t.string "url"
+    t.bigint "user_id"
+    t.boolean "private", default: true
+    t.float "width", null: false
+    t.float "height", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_templates_on_user_id"
+  end
+
   create_table "textboxes", force: :cascade do |t|
     t.text "content", default: ""
     t.integer "pos_x", null: false
@@ -136,6 +150,7 @@ ActiveRecord::Schema.define(version: 20180412193144) do
 
   add_foreign_key "canvas_images", "layers"
   add_foreign_key "canvas_images", "users"
+  add_foreign_key "canvases", "templates"
   add_foreign_key "canvases", "users"
   add_foreign_key "chatrooms", "canvases"
   add_foreign_key "layers", "canvases"
@@ -145,6 +160,7 @@ ActiveRecord::Schema.define(version: 20180412193144) do
   add_foreign_key "strokes", "layers"
   add_foreign_key "strokes", "users"
   add_foreign_key "strokes", "users", column: "editor_id"
+  add_foreign_key "templates", "users"
   add_foreign_key "textboxes", "layers"
   add_foreign_key "textboxes", "users", column: "editor_id"
 end
