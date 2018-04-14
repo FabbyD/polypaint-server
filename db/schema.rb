@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180413021632) do
+ActiveRecord::Schema.define(version: 20180414224403) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -44,6 +44,7 @@ ActiveRecord::Schema.define(version: 20180413021632) do
     t.string "password_digest", default: ""
     t.string "thumbnail"
     t.bigint "template_id"
+    t.datetime "thumbnail_updated_at"
     t.index ["template_id"], name: "index_canvases_on_template_id"
     t.index ["user_id"], name: "index_canvases_on_user_id"
   end

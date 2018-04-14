@@ -454,17 +454,22 @@ class CanvasChannel < ApplicationCable::Channel
     content = data['content']
     canvas = Canvas.find_by(id: content['canvas']['id'])
     if canvas
+      puts "Thumbnail updated at: #{canvas.thumbnail_updated_at}"
       if content['canvas']['thumbnail']
-        if canvas.thumbnail and canvas.thumbnail != ''
-          path = get_s3_path(canvas.thumbnail)
-          if path
-            puts "CanvasChannel.update_canvas_thumbnail - deleting previous thumbnail"
-            obj = S3_BUCKET.object(path)
-            obj.delete
+        #if (canvas.thumbnail_updated_at == nil) or (canvas.thumbnail_updated_at < (DateTime.now - 5.minutes))
+          if canvas.thumbnail and canvas.thumbnail != ''
+            path = get_s3_path(canvas.thumbnail)
+            if path
+              puts "CanvasChannel.update_canvas_thumbnail - deleting previous thumbnail"
+              obj = S3_BUCKET.object(path)
+              obj.delete
+            end
           end
-        end
-        url = upload_image(content['canvas']['thumbnail'], path: 'thumbnails/', filename: "canvas-#{canvas.id}.png")
-        canvas.update(thumbnail: url)
+          url = upload_image(content['canvas']['thumbnail'], path: 'thumbnails/', filename: "canvas-#{canvas.id}.png")
+          canvas.update(thumbnail: url, thumbnail_updated_at: DateTime.now)
+        #else
+        #  puts "CanvasChannel.update_canvas_thumbnail - trying to update thumbnail too soon"
+        #end
       end
     end
   end
