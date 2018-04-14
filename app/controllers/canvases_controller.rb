@@ -58,11 +58,12 @@ class CanvasesController < ApplicationController
       end
       jcanvas["layers"] = canvas.layers.order('layers.index ASC').map do |layer|
         jlayer = layer.as_json()
-        jlayer["strokes"] = layer.strokes.select('*, users.name as editor_name').order('strokes.created_at ASC').joins(:editor)
+        jlayer["strokes"] = layer.strokes.select('*, strokes.id, users.name as editor_name').order('strokes.created_at ASC').joins(:editor)
         jlayer["images"] = layer.canvas_images.order('canvas_images.created_at ASC')
         jlayer["textboxes"] = layer.textboxes.order('textboxes.created_at ASC')
         jlayer
       end
+      puts jcanvas
       render status: :ok,
         json: { canvas: jcanvas }
     else
