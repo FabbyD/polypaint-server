@@ -451,22 +451,22 @@ class CanvasChannel < ApplicationCable::Channel
   end
 
   def update_canvas_thumbnail(data)
-    #content = data['content']
-    #canvas = Canvas.find_by(id: content['canvas']['id'])
-    #if canvas
-    #  if content['canvas']['thumbnail']
-    #    if canvas.thumbnail and canvas.thumbnail != ''
-    #      path = get_s3_path(canvas.thumbnail)
-    #      if path
-    #        puts "CanvasChannel.update_canvas_thumbnail - deleting previous thumbnail"
-    #        obj = S3_BUCKET.object(path)
-    #        obj.delete
-    #      end
-    #    end
-    #    url = upload_image(content['canvas']['thumbnail'], path: 'thumbnails/', filename: "canvas-#{canvas.id}.png")
-    #    canvas.update(thumbnail: url)
-    #  end
-    #end
+    content = data['content']
+    canvas = Canvas.find_by(id: content['canvas']['id'])
+    if canvas
+      if content['canvas']['thumbnail']
+        if canvas.thumbnail and canvas.thumbnail != ''
+          path = get_s3_path(canvas.thumbnail)
+          if path
+            puts "CanvasChannel.update_canvas_thumbnail - deleting previous thumbnail"
+            obj = S3_BUCKET.object(path)
+            obj.delete
+          end
+        end
+        url = upload_image(content['canvas']['thumbnail'], path: 'thumbnails/', filename: "canvas-#{canvas.id}.png")
+        canvas.update(thumbnail: url)
+      end
+    end
   end
 
   def update_selection(data)
