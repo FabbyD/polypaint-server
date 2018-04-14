@@ -56,7 +56,7 @@ class CanvasesController < ApplicationController
       if canvas.template
         jcanvas["template_url"] = canvas.template.url
       end
-      jcanvas["layers"] = canvas.layers.map do |layer|
+      jcanvas["layers"] = canvas.layers.order('layers.index ASC').map do |layer|
         jlayer = layer.as_json()
         jlayer["strokes"] = layer.strokes.select('*, users.name as editor_name').order('strokes.created_at ASC').joins(:editor)
         jlayer["images"] = layer.canvas_images.order('canvas_images.created_at ASC')
