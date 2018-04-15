@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   put '/canvases/:id', to: 'canvases#update'
   get '/users/:user_name/canvases', to: 'canvases#indexByUser'
   post '/canvases/login', to: 'canvases#authenticate'
+  post '/canvases/push', to: 'canvases#push'
 
   get '/pixel_canvases/:id', to: 'pixel_canvases#show'
   post '/pixel_canvases', to: 'pixel_canvases#create'

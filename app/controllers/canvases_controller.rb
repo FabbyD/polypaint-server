@@ -1,12 +1,16 @@
 require 'securerandom'
 
 class CanvasesController < ApplicationController
+  include FileUploadHelper
+
   def create
-    canvas = Canvas.new(params.require(:canvas).permit(:name, :description, :width, :height, :private, :protected, :password, :template_id))
+    permitted = params.require(:canvas).permit(:name, :description, :width, :height, :private, :protected, :password, :template_id, :layers)
+    canvas = Canvas.new(permitted.except(:layers, "layers"))
     canvas.user = User.find_by(name: params[:current_user])
 
     if canvas.save
-      # Create first layer too
+      # Create first default layer
+      puts "Creating default layer"
       layer = Layer.new(uuid: "layer:#{SecureRandom.uuid}", index: 0)
       layer.canvas = canvas
       if not layer.save
@@ -27,6 +31,63 @@ class CanvasesController < ApplicationController
       puts "[ERROR] CanvasesController.create - error: #{canvas.errors.full_messages}"
       render status: :bad_request,
         json: { errors: canvas.errors.full_messages }
+    end
+  end
+
+  def push
+    permitted = params.require(:canvas).permit(:name, :description, :width, :height, :private, :protected, :password, :template_id, :user_id,
+                                              layers: [ :uuid, :index,
+                                                       { strokes: [ { points_x: [] }, { points_y: [] }, :color, :width, :height, :shape, :local_id, :layer_uuid] },
+                                                       { images: [ :local_id, :pos_x, :pos_y, :width, :height, :layer_uuid, :data ] },
+                                                       { textboxes: [ :local_id, :layer_uuid, :pos_x, :pos_y, :width, :height, :color, :font_size, :content ] }
+                                                      ])
+    
+    user = User.find_by(name: params[:current_user])
+    canvas = Canvas.new(permitted.except(:layers, "layers"))
+    canvas.user = user
+
+    if canvas.save
+      layers = permitted[:layers] || permitted["layers"]
+      for jlayer in layers
+        layer = Layer.new(jlayer.except("strokes", "images", "textboxes"))
+        layer.canvas = canvas
+        if layer.save
+          for jstroke in jlayer["strokes"]
+            stroke = Stroke.new(jstroke.except('layer_uuid'))
+            stroke.layer = layer
+            stroke.user = user
+            stroke.editor = user
+            stroke.save
+          end
+          for jtextbox in jlayer["textboxes"]
+            textbox = Textbox.new(jtextbox.except('layer_uuid'))
+            textbox.layer = layer
+            textbox.editor = user
+            textbox.save
+          end
+          for jimage in jlayer["images"]
+            image = CanvasImage.new(jimage.except('data', 'layer_uuid'))
+            image.layer = layer
+            image.user = user
+            url = upload_image(jimage['data'], path: 'canvas_images/')
+            image.url = url
+            image.save
+          end
+        else
+          puts "[ERROR] CanvasesController.push - layer error: #{layer.errors.full_messages}"
+        end
+      end
+
+      # Create chatroom
+      chatroom = Chatroom.new()
+      chatroom.canvas = canvas
+      chatroom.name = SecureRandom.uuid
+      if not chatroom.save
+        puts "[ERROR] CanvasesController.push - chatroom error: #{chatroom.errors.full_messages}"
+      end
+
+      render status: :ok,
+        json: { canvas: canvas }
     end
   end
 
@@ -120,4 +181,17 @@ class CanvasesController < ApplicationController
                         pixel_canvases.created_at, pixel_canvases.updated_at')
       .joins(:user)
   end
+
+  def saveLayer
+  end
+
+  def saveStroke
+  end
+
+  def saveImage(jimage, layer, user)
+  end
+
+  def saveTextBox
+  end
+
 end
