@@ -12,7 +12,16 @@ class PixelCanvasesController < ApplicationController
   def create
     canvas = PixelCanvas.new(params.require(:canvas).permit(:name, :description, :width, :height, :private, :protected, :password))
     canvas.user = User.find_by(name: params[:current_user])
+
     if canvas.save
+      # Create chatroom
+      chatroom = Chatroom.new()
+      chatroom.pixel_canvas = canvas
+      chatroom.name = SecureRandom.uuid
+      if not chatroom.save
+        puts "[ERROR] PixelCanvasesController.create - chatroom error: #{chatroom.errors.full_messages}"
+      end
+
       render status: :ok,
         json: { pixel_canvas: canvas }
     else

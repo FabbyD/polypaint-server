@@ -4,6 +4,14 @@ class ChatroomChannel < ApplicationCable::Channel
     
     if room == "Waiting Room"
       stream_from get_stream_name
+    elsif room.starts_with?("pixel:")
+      id = room[6..-1]
+      canvas = PixelCanvas.find_by(id: id)
+      if canvas
+        stream_from get_stream_name
+      else
+        puts "[ERROR] ChatroomChannel.subscribed - could not find pixel canvas with id #{id}"
+      end
     else
       canvas = Canvas.find_by(id: room)
       if canvas
@@ -21,16 +29,22 @@ class ChatroomChannel < ApplicationCable::Channel
   def message(data)
     room = params[:room]
     chatroom = nil
+    canvas = nil
+
     if room == "Waiting Room"
       chatroom = Chatroom.find_by(name: room)
+    elsif room.starts_with?("pixel:")
+      id = room[6..-1]
+      canvas = PixelCanvas.find(id)
     else
       canvas = Canvas.find(params[:room])
-      if canvas
-        chatroom = canvas.chatroom
-      else
-        puts "[ERROR] ChatroomChannel.message - could not find canvas with id #{params[:room]}"
-        return
-      end
+    end
+
+    if canvas
+      chatroom = canvas.chatroom
+    else
+      puts "[ERROR] ChatroomChannel.message - could not find canvas with id #{params[:room]}"
+      return
     end
 
     message = Message.new(content: data["content"])
