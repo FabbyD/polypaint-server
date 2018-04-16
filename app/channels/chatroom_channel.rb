@@ -36,16 +36,22 @@ class ChatroomChannel < ApplicationCable::Channel
     elsif room.starts_with?("pixel:")
       id = room[6..-1]
       canvas = PixelCanvas.find(id)
+      if canvas
+        chatroom = canvas.chatroom
+      else
+        puts "[ERROR] ChatroomChannel.message - could not find pixel canvas with id #{params[:room]}"
+        return
+      end
     else
       canvas = Canvas.find(params[:room])
+      if canvas
+        chatroom = canvas.chatroom
+      else
+        puts "[ERROR] ChatroomChannel.message - could not find canvas with id #{params[:room]}"
+        return
+      end
     end
 
-    if canvas
-      chatroom = canvas.chatroom
-    else
-      puts "[ERROR] ChatroomChannel.message - could not find canvas with id #{params[:room]}"
-      return
-    end
 
     message = Message.new(content: data["content"])
     message.user = User.find_by(id: current_user)
